@@ -1,0 +1,16 @@
+{
+"name": "meeting-intel-suit",
+"private": true,
+"version": "0.0.0",
+"devDependencies": {
+"typescript": "^5.0.0",
+"pnpm": "^8.0.0",
+"eslint": "^8.0.0",
+"prettier": "^2.0.0"
+},
+"scripts": {
+"build": "pnpm -w -r --stream run build",
+"typecheck": "pnpm -w -r --stream run typecheck",
+"install:all": "pnpm install"
+}
+}
