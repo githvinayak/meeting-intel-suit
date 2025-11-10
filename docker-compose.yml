@@ -1,0 +1,146 @@
+version: '3.9'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: meeting-intel-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: meeting_intelligence
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - meeting-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: meeting-intel-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - meeting-network
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: meeting-intel-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - meeting-network
+
+  # Gateway Service
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    container_name: meeting-intel-gateway
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      AUTH_SERVICE_URL: http://auth:3001
+      MEETING_SERVICE_URL: http://meeting:3002
+      REALTIME_SERVICE_URL: http://realtime:3003
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - meeting-network
+    volumes:
+      - ./services/gateway/src:/app/src
+
+  # Auth Service
+  auth:
+    build:
+      context: ./services/auth
+      dockerfile: Dockerfile
+    container_name: meeting-intel-auth
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      MONGODB_URI: mongodb://admin:admin123@mongodb:27017/meeting_intelligence?authSource=admin
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - meeting-network
+    volumes:
+      - ./services/auth/src:/app/src
+
+  # Meeting Service
+  meeting:
+    build:
+      context: ./services/meeting
+      dockerfile: Dockerfile
+    container_name: meeting-intel-meeting
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      NODE_ENV: development
+      PORT: 3002
+      MONGODB_URI: mongodb://admin:admin123@mongodb:27017/meeting_intelligence?authSource=admin
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - meeting-network
+    volumes:
+      - ./services/meeting/src:/app/src
+
+  # Realtime Service
+  realtime:
+    build:
+      context: ./services/realtime
+      dockerfile: Dockerfile
+    container_name: meeting-intel-realtime
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      NODE_ENV: development
+      PORT: 3003
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+    depends_on:
+      - redis
+      - rabbitmq
+    networks:
+      - meeting-network
+    volumes:
+      - ./services/realtime/src:/app/src
+
+networks:
+  meeting-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  redis_data:
+  rabbitmq_data:

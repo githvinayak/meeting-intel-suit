@@ -1,16 +1,38 @@
 {
-"name": "meeting-intel-suit",
-"private": true,
-"version": "0.0.0",
-"devDependencies": {
-"typescript": "^5.0.0",
-"pnpm": "^8.0.0",
-"eslint": "^8.0.0",
-"prettier": "^2.0.0"
-},
-"scripts": {
-"build": "pnpm -w -r --stream run build",
-"typecheck": "pnpm -w -r --stream run typecheck",
-"install:all": "pnpm install"
-}
+  "name": "meeting-intel-suit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI-powered meeting transcription platform with real-time collaboration",
+  "scripts": {
+    "dev": "echo 'Development mode - run docker-compose up'",
+    "build": "pnpm -r build",
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "lint": "eslint . --ext .ts --fix",
+    "format": "prettier --write \"**/*.{ts,json,md}\"",
+    "type-check": "pnpm -r type-check"
+  },
+  "keywords": [
+    "meeting",
+    "transcription",
+    "AI",
+    "microservices"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
+    "@typescript-eslint/parser": "^8.46.3",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.3"
+  }
 }
