@@ -1,15 +1,19 @@
-import express, { Request, Response } from 'express';
+import express, { Application, Request, Response } from 'express';
+import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import { ApiResponse } from '@meeting-intelligence/shared-types';
 
-const app = express();
+dotenv.config();
+
+const app: Application = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
+app.use(helmet()); // Security headers
+app.use(cors()); // Enable CORS
+app.use(express.json()); // Parse JSON bodies
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
 // Health check route
 app.get('/health', (_req: Request, res: Response) => {
