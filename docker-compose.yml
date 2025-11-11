@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # MongoDB Database
   mongodb:
@@ -35,8 +33,8 @@ services:
     container_name: meeting-intel-rabbitmq
     restart: unless-stopped
     ports:
-      - "5672:5672"   # AMQP port
-      - "15672:15672" # Management UI
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin123
@@ -48,8 +46,8 @@ services:
   # Gateway Service
   gateway:
     build:
-      context: ./services/gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/gateway/Dockerfile
     container_name: meeting-intel-gateway
     restart: unless-stopped
     ports:
@@ -66,14 +64,12 @@ services:
       - rabbitmq
     networks:
       - meeting-network
-    volumes:
-      - ./services/gateway/src:/app/src
 
   # Auth Service
   auth:
     build:
-      context: ./services/auth
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/auth/Dockerfile
     container_name: meeting-intel-auth
     restart: unless-stopped
     ports:
@@ -89,14 +85,12 @@ services:
       - redis
     networks:
       - meeting-network
-    volumes:
-      - ./services/auth/src:/app/src
 
   # Meeting Service
   meeting:
     build:
-      context: ./services/meeting
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/meeting/Dockerfile
     container_name: meeting-intel-meeting
     restart: unless-stopped
     ports:
@@ -111,14 +105,12 @@ services:
       - rabbitmq
     networks:
       - meeting-network
-    volumes:
-      - ./services/meeting/src:/app/src
 
   # Realtime Service
   realtime:
     build:
-      context: ./services/realtime
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/realtime/Dockerfile
     container_name: meeting-intel-realtime
     restart: unless-stopped
     ports:
@@ -133,8 +125,6 @@ services:
       - rabbitmq
     networks:
       - meeting-network
-    volumes:
-      - ./services/realtime/src:/app/src
 
 networks:
   meeting-network:
