@@ -33,12 +33,6 @@ const userSchema = new Schema<IUser>(
     profilePic: {
       type: String,
       default: 'https://ui-avatars.com/api/?background=random&name=User', // default avatar service
-      validate: {
-        validator: function (v: string) {
-          return /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif|svg)?$/.test(v);
-        },
-        message: 'Please provide a valid image URL',
-      },
     },
   },
   { timestamps: true }

@@ -8,20 +8,17 @@ const authService = new AuthService();
  * Register a new user
  * POST /api/auth/register
  */
-export const register = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  console.log('🎯 Register controller hit!');
+  console.log('📦 Request body:', req.body);
   try {
-    // 1. Validate input with Zod
     const validationResult = registerSchema.safeParse(req.body);
-    
+
     if (!validationResult.success) {
       res.status(400).json({
         success: false,
         message: 'Validation failed',
-        errors: validationResult.error.issues.map(err => ({
+        errors: validationResult.error.issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
         })),

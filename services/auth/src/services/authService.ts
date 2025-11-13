@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { RegisterInput } from '../validators/authValidators';
-import { IUser, User } from '../models/User';
+import { User } from '../models/User';
 
 interface UserResponse {
   _id: string;
@@ -26,12 +26,19 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, this.SALT_ROUNDS);
 
-    const user = await User.create({
+    // Create user data object
+    const userCreateData: any = {
       name,
       email,
       password: hashedPassword,
-      profilePic: profilePic || undefined,
-    });
+    };
+
+    // Only add profilePic if provided
+    if (profilePic) {
+      userCreateData.profilePic = profilePic;
+    }
+
+    const user = await User.create(userCreateData);
 
     return {
       _id: user._id.toString(),

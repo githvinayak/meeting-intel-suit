@@ -41,7 +41,8 @@ export const registerSchema = z.object({
   profilePic: z
     .string()
     .url('Profile picture must be a valid URL')
-    .optional(),
+    .optional()
+    .transform(val => val === '' ? undefined : val),  // Convert empty string to undefined
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
