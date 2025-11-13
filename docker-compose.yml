@@ -77,7 +77,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3001
-      MONGODB_URI: mongodb://admin:admin123@mongodb:27017/meeting_intelligence?authSource=admin
+      MONGODB_URI: mongodb://admin:admin123@mongodb:27017/meeting-intel-auth?authSource=admin
       REDIS_URL: redis://redis:6379
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
     depends_on:
@@ -98,7 +98,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3002
-      MONGODB_URI: mongodb://admin:admin123@mongodb:27017/meeting_intelligence?authSource=admin
+      MONGODB_URI: mongodb://admin:admin123@mongodb:27017/meeting-intel-meeting?authSource=admin
       RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
     depends_on:
       - mongodb

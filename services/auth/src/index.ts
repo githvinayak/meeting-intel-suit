@@ -3,6 +3,9 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import { ApiResponse } from '@meeting-intelligence/shared-types';
+import { connectDatabase } from './config/db';
+import { errorHandler } from './middleware/errorHandler';
+import authRoutes from './routes/authRoutes';
 
 dotenv.config();
 
@@ -10,10 +13,13 @@ const app: Application = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(helmet()); // Security headers
-app.use(cors()); // Enable CORS
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(helmet());
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Connect to database
+connectDatabase();
 
 // Health check route
 app.get('/health', (_req: Request, res: Response) => {
@@ -27,6 +33,12 @@ app.get('/health', (_req: Request, res: Response) => {
   };
   res.json(response);
 });
+
+// Auth routes
+app.use('/api/v1/auth', authRoutes);
+
+// Error handler MUST be last
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
