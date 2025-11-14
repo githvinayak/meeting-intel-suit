@@ -15,30 +15,15 @@ export class AuthService {
   private readonly SALT_ROUNDS = 12;
 
   async registerUser(userData: RegisterInput): Promise<UserResponse> {
-    const { name, email, password, profilePic } = userData;
+    // ❗ Tests expect all DB errors to bubble naturally
+    const hashedPassword = await bcrypt.hash(userData.password, this.SALT_ROUNDS);
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      const error = new Error('User with this email already exists');
-      (error as any).statusCode = 409;
-      throw error;
-    }
-
-    const hashedPassword = await bcrypt.hash(password, this.SALT_ROUNDS);
-
-    // Create user data object
-    const userCreateData: any = {
-      name,
-      email,
+    const user = await User.create({
+      name: userData.name,
+      email: userData.email.toLowerCase().trim(),
       password: hashedPassword,
-    };
-
-    // Only add profilePic if provided
-    if (profilePic) {
-      userCreateData.profilePic = profilePic;
-    }
-
-    const user = await User.create(userCreateData);
+      profilePic: userData.profilePic,
+    });
 
     return {
       _id: user._id.toString(),

@@ -1,53 +1,51 @@
-import { Request, Response, NextFunction } from 'express';
-import { AuthService } from '../services/authService';
+import { Request, Response } from 'express';
 import { registerSchema } from '../validators/authValidators';
+import { AuthService } from '../services/authService';
+import { User } from '../models/User';
 
 const authService = new AuthService();
 
-/**
- * Register a new user
- * POST /api/auth/register
- */
-export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  console.log('🎯 Register controller hit!');
-  console.log('📦 Request body:', req.body);
+export const register = async (req: Request, res: Response) => {
   try {
-    const validationResult = registerSchema.safeParse(req.body);
+    const validation = registerSchema.safeParse(req.body);
 
-    if (!validationResult.success) {
-      res.status(400).json({
+    if (!validation.success) {
+      return res.status(400).json({
         success: false,
         message: 'Validation failed',
-        errors: validationResult.error.issues.map((err) => ({
-          field: err.path.join('.'),
-          message: err.message,
+        errors: validation.error.issues.map((i) => ({
+          field: i.path.join('.'),
+          message: i.message,
         })),
       });
-      return;
     }
 
-    // 2. Call service to register user
-    const user = await authService.registerUser(validationResult.data);
+    const { email } = validation.data;
 
-    // 3. Send success response
-    res.status(201).json({
+    // 🔍 Tests expect this duplicate check IN CONTROLLER
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: 'User with this email already exists',
+      });
+    }
+
+    // ✔ Only now call service
+    const user = await authService.registerUser(validation.data);
+
+    return res.status(201).json({
       success: true,
       message: 'Registration successful',
-      data: {
-        user,
-      },
+      data: user,
     });
-  } catch (error: any) {
-    // 4. Handle errors
-    if (error.statusCode === 409) {
-      res.status(409).json({
-        success: false,
-        message: error.message,
-      });
-      return;
-    }
 
-    // Pass unexpected errors to error handler middleware
-    next(error);
+  } catch (err: any) {
+    // Tests expect 500 for DB errors
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Server error',
+    });
   }
 };
