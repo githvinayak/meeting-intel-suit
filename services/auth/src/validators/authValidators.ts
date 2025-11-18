@@ -8,18 +8,13 @@ const passwordSchema = z
   .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
   .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
   .regex(/[0-9]/, 'Password must contain at least one number')
-  .regex(
-    /[^A-Za-z0-9]/,
-    'Password must contain at least one special character (!@#$%^&*)'
-  )
+  .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character (!@#$%^&*)')
   .refine(
     (password) => {
       // EXACTLY the weak passwords required by tests
       const weakPatterns = ['password', 'pass', '1234567890', 'qwerty'];
 
-      return !weakPatterns.some((weak) =>
-        password.toLowerCase().includes(weak)
-      );
+      return !weakPatterns.some((weak) => password.toLowerCase().includes(weak));
     },
     {
       message: 'Password is too common. Please choose a stronger password',
@@ -33,14 +28,9 @@ export const registerSchema = z.object({
     .max(50, 'Name must be less than 50 characters')
     .trim(),
 
-  email: z
-    .string()
-    .email('Invalid email format')
-    .trim()
-    .toLowerCase(),
-
+  email: z.string().email('Invalid email format').trim().toLowerCase(),
+  role: z.enum(['member', 'author']).optional(),
   password: passwordSchema,
-
   profilePic: z
     .string()
     .url('Profile picture must be a valid URL')
@@ -48,4 +38,10 @@ export const registerSchema = z.object({
     .transform((val) => (val === '' ? undefined : val)),
 });
 
+export const loginSchema = z.object({
+  email: z.string().email('Invalid email format').trim().toLowerCase(),
+  password: passwordSchema,
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
