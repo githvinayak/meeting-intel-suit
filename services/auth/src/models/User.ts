@@ -5,7 +5,10 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  role: 'member' | 'author';
   profilePic?: string; // Optional field
+  isEmailVerified: boolean;
+  lastLogin?: Date; // Add this line
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,12 +33,26 @@ const userSchema = new Schema<IUser>(
       required: [true, 'Password is required'],
       minlength: [8, 'Password must be at least 8 characters long'], // Changed from 6 to 8
     },
+    role: {
+      type: String,
+      enum: ['member', 'author'],
+      default: 'member',
+    },
     profilePic: {
       type: String,
       default: 'https://ui-avatars.com/api/?background=random&name=User', // default avatar service
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    lastLogin: {
+      // Add this field
+      type: Date,
     },
   },
   { timestamps: true }
 );
 
-export const User: Model<IUser> = (mongoose.models.User as Model<IUser>) || mongoose.model<IUser>('User', userSchema);
+export const User: Model<IUser> =
+  (mongoose.models.User as Model<IUser>) || mongoose.model<IUser>('User', userSchema);
