@@ -21,9 +21,9 @@ const redis = new Redis(redisUrl, {
     const delay = Math.min(times * 50, 2000);
     return delay;
   },
-  maxRetriesPerRequest: 3,
-  lazyConnect: true,
-  enableOfflineQueue: false,
+   maxRetriesPerRequest: 3,
+  enableOfflineQueue: true,  // ADD THIS LINE - queues commands until connected
+  lazyConnect: false,         // ADD THIS LINE - connect immediately
   showFriendlyErrorStack: true,
 });
 
