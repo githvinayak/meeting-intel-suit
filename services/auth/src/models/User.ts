@@ -47,7 +47,6 @@ const userSchema = new Schema<IUser>(
       default: false,
     },
     lastLogin: {
-      // Add this field
       type: Date,
     },
   },
