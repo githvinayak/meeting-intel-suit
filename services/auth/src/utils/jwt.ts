@@ -26,9 +26,6 @@ export interface DecodedToken extends JwtPayload {
   tokenId?: string;
 }
 
-/**
- * Generate access token (short-lived)
- */
 export const generateAccessToken = (payload: TokenPayload): string => {
   try {
     const tokenPayload: Record<string, any> = {
@@ -51,10 +48,6 @@ export const generateAccessToken = (payload: TokenPayload): string => {
   }
 };
 
-/**
- * Generate refresh token (long-lived, stateful)
- * INCLUDES tokenId for Redis revocation checking
- */
 export const generateRefreshToken = (payload: TokenPayload): string => {
   try {
     const tokenPayload: Record<string, any> = {
@@ -82,9 +75,6 @@ export const generateRefreshToken = (payload: TokenPayload): string => {
   }
 };
 
-/**
- * Verify and decode token
- */
 export const verifyToken = (token: string): DecodedToken => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET, {
@@ -108,9 +98,6 @@ export const verifyToken = (token: string): DecodedToken => {
   }
 };
 
-/**
- * Parse "7d", "10h", "30m" → seconds
- */
 export const getRefreshTokenExpiry = (): number => {
   const clean = String(REFRESH_TOKEN_EXPIRY).trim();
 
