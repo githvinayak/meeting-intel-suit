@@ -94,3 +94,86 @@ export const login = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const refreshToken = async (req: Request, res: Response) => {
+  try {
+    const { refreshToken } = req.body;
+
+    // Validation: Check if refresh token is provided
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token is required',
+      });
+    }
+
+    // Validation: Check if it's a string
+    if (typeof refreshToken !== 'string' || refreshToken.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid refresh token format',
+      });
+    }
+
+    // Call service to refresh tokens
+    const tokens = await authService.refreshAccessToken(refreshToken);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Token refreshed successfully',
+      data: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      },
+    });
+  } catch (err: any) {
+    logger.error('Refresh token controller error:', err.message);
+
+    // Handle specific error cases
+    if (
+      err.message.includes('Invalid') ||
+      err.message.includes('expired') ||
+      err.message.includes('revoked')
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    // Generic server error
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to refresh token',
+    });
+  }
+};
+
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { refreshToken } = req.body;
+
+    // Validation
+    if (!refreshToken) {
+      res.status(400).json({
+        success: false,
+        message: 'Refresh token is required',
+      });
+      return;
+    }
+
+    // Call service
+    await authService.logout(refreshToken);
+
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (error: any) {
+    logger.error('Logout error:', error);
+    res.status(401).json({
+      success: false,
+      message: error.message || 'Logout failed',
+    });
+  }
+};
