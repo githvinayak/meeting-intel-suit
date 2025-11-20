@@ -1,8 +1,13 @@
 import bcrypt from 'bcryptjs';
 import { LoginInput, RegisterInput } from '../validators/authValidators';
 import { User } from '../models/User';
-import { generateTokenId, storeRefreshToken } from '../utils/token';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
+import {
+  deleteRefreshToken,
+  generateTokenId,
+  getRefreshToken,
+  storeRefreshToken,
+} from '../utils/token';
+import { generateAccessToken, generateRefreshToken, verifyToken } from '../utils/jwt';
 import { logger } from '../utils/logger';
 
 interface UserResponse {
@@ -105,4 +110,93 @@ export class AuthService {
       },
     };
   }
+
+  async refreshAccessToken(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    // 1. Verify the refresh token
+    let decoded;
+    try {
+      decoded = verifyToken(refreshToken);
+    } catch (error: any) {
+      logger.error('Refresh token verification failed:', error.message);
+      throw new Error('Invalid or expired refresh token');
+    }
+
+    // 2. Extract userId and tokenId from decoded token
+    const { userId, email, tokenId, role } = decoded;
+
+    if (!tokenId) {
+      logger.error('Refresh token missing tokenId');
+      throw new Error('Invalid refresh token format');
+    }
+
+    // 3. Check if refresh token exists in Redis (not revoked)
+    const storedToken = await getRefreshToken(userId, tokenId);
+
+    if (!storedToken) {
+      logger.warn(`Refresh token not found for user ${userId} with tokenId ${tokenId}`);
+      throw new Error('Refresh token has been revoked or does not exist');
+    }
+
+    // 4. Verify stored token matches provided token
+    if (storedToken !== refreshToken) {
+      logger.warn(`Token mismatch for user ${userId}`);
+      throw new Error('Invalid refresh token');
+    }
+
+    // 5. Delete old refresh token (token rotation - one-time use)
+    await deleteRefreshToken(userId, tokenId);
+
+    // 6. Generate new access token
+    const newAccessToken = generateAccessToken({
+      userId,
+      email,
+      role,
+    });
+
+    // 7. Generate new refresh token with new tokenId (rotation)
+    const newTokenId = generateTokenId();
+    const newRefreshToken = generateRefreshToken({
+      userId,
+      email,
+      role,
+      tokenId: newTokenId,
+    });
+
+    // 8. Store new refresh token in Redis
+    await storeRefreshToken(userId, newRefreshToken, newTokenId);
+
+    logger.info(`Token refreshed successfully for user: ${userId}`);
+
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
+  }
+
+  async logout(refreshToken: string): Promise<void> {
+  // 1. Verify the refresh token
+  let decoded;
+  try {
+    decoded = verifyToken(refreshToken);
+  } catch (error: any) {
+    logger.error('Logout - Invalid refresh token:', error.message);
+    throw new Error('Invalid refresh token');
+  }
+
+  // 2. Extract userId and tokenId
+  const { userId, tokenId } = decoded;
+
+  if (!tokenId) {
+    logger.error('Logout - Refresh token missing tokenId');
+    throw new Error('Invalid refresh token format');
+  }
+
+  // 3. Delete refresh token from Redis
+   await deleteRefreshToken(userId, tokenId);
+
+  logger.info(`User logged out successfully: ${userId}`);
+}
 }
