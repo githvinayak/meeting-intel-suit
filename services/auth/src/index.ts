@@ -24,6 +24,8 @@ app.use(express.urlencoded({ extended: true }));
 initializeRedis();
 connectDatabase();
 
+app.set('trust proxy', true);
+
 // Health check route
 app.get('/health', (_req: Request, res: Response) => {
   const response: ApiResponse = {
