@@ -117,7 +117,7 @@ export const getRefreshTokenExpiry = (): number => {
   const match = clean.match(/^(\d+)([smhd])$/);
   if (!match) return 7 * 24 * 60 * 60;
 
-  const [, value, unit] = match;
+  const [value, unit] = match;
   const num = parseInt(value, 10);
 
   switch (unit) {

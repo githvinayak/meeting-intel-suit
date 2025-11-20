@@ -2,8 +2,10 @@ import mongoose from 'mongoose';
 
 export const connectDatabase = async (): Promise<void> => {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://admin:admin123@localhost:27017/meeting-intel-auth?authSource=admin';
-
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      throw new Error('❌ Missing MONGODB_URI environment variable');
+    }
     await mongoose.connect(mongoUri);
 
     console.log('✅ MongoDB connected successfully to meeting-intel-auth');

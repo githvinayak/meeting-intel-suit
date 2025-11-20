@@ -6,11 +6,13 @@ import { ApiResponse } from '@meeting-intelligence/shared-types';
 import { connectDatabase } from './config/db';
 import { errorHandler } from './middleware/errorHandler';
 import authRoutes from './routes/authRoutes';
+import { initializeRedis } from './config/redis';
 
 dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 3001;
+console.log("logging the port from env ",process.env.PORT);
 
 // Middleware
 app.use(helmet());
@@ -19,6 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Connect to database
+initializeRedis();
 connectDatabase();
 
 // Health check route
