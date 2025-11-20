@@ -1,6 +1,7 @@
 import express, { Router } from 'express';
 import { login, register } from '../controllers/authController';
 import { authenticate } from '../middleware/authenticate';
+import { loginLimiter, registerLimiter } from '../middleware/rateLimiter';
 
 const router: Router = express.Router();
 
@@ -11,8 +12,8 @@ router.use((req, _res, next) => {
 });
 
 // POST /api/v1/auth/register
-router.post('/register', register);
-router.post('/login', login);
+router.post('/register', registerLimiter, register);
+router.post('/login', loginLimiter, login);
 router.get('/me', authenticate, (req, res) => {
   res.status(200).json({
     success: true,
