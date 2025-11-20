@@ -1,19 +1,15 @@
 import express, { Router } from 'express';
-import { login, register } from '../controllers/authController';
+import { login, logout, refreshToken, register } from '../controllers/authController';
 import { authenticate } from '../middleware/authenticate';
 import { loginLimiter, registerLimiter } from '../middleware/rateLimiter';
 
 const router: Router = express.Router();
 
-// Add logging middleware
-router.use((req, _res, next) => {
-  console.log(`📍 Auth Route Hit: ${req.method} ${req.path}`);
-  next();
-});
-
 // POST /api/v1/auth/register
 router.post('/register', registerLimiter, register);
 router.post('/login', loginLimiter, login);
+router.post('/refresh', refreshToken);
+router.post('/logout', logout);
 router.get('/me', authenticate, (req, res) => {
   res.status(200).json({
     success: true,
