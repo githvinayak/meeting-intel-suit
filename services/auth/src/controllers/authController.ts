@@ -3,8 +3,10 @@ import { loginSchema, registerSchema } from '../validators/authValidators';
 import { AuthService } from '../services/authService';
 import { User } from '../models/User';
 import { logger } from '../utils/logger';
+import { PasswordService } from '../services/passwordService';
 
 const authService = new AuthService();
+const passwordService = new PasswordService();
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -174,6 +176,129 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
     res.status(401).json({
       success: false,
       message: error.message || 'Logout failed',
+    });
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    await passwordService.requestPasswordReset(email);
+
+    // Always return success (don't reveal if email exists)
+    res.status(200).json({
+      success: true,
+      message: 'If an account exists with this email, you will receive a password reset link',
+    });
+  } catch (error: any) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process password reset request',
+    });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Validate request
+    const { token, newPassword } = req.body;
+
+    await passwordService.resetPassword(token, newPassword);
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successful. You can now login with your new password',
+    });
+  } catch (error: any) {
+    console.error('Reset password error:', error);
+
+    if (error.message === 'Invalid or expired reset token') {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid or expired reset token. Please request a new one',
+      });
+      return;
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reset password',
+    });
+  }
+};
+
+export const verifyResetToken = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      res.status(400).json({
+        success: false,
+        message: 'Token is required',
+      });
+      return;
+    }
+
+    const isValid = await passwordService.verifyResetToken(token);
+
+    if (!isValid) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid or expired token',
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Token is valid',
+    });
+  } catch (error: any) {
+    console.error('Verify token error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify token',
+    });
+  }
+};
+
+export const changePassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Validate request
+
+    const userId = req.user?.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+      return;
+    }
+
+    await passwordService.changePassword(userId, currentPassword, newPassword);
+
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully',
+    });
+  } catch (error: any) {
+    console.error('Change password error:', error);
+
+    if (error.message === 'Current password is incorrect') {
+      res.status(400).json({
+        success: false,
+        message: 'Current password is incorrect',
+      });
+      return;
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to change password',
     });
   }
 };
