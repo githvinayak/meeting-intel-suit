@@ -7,12 +7,14 @@ import { connectDatabase } from './config/db';
 import { errorHandler } from './middleware/errorHandler';
 import authRoutes from './routes/authRoutes';
 import { initializeRedis } from './config/redis';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger/swagger';
 
 dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 3001;
-console.log("logging the port from env ",process.env.PORT);
+console.log('logging the port from env ', process.env.PORT);
 
 // Middleware
 app.use(helmet());
@@ -39,6 +41,21 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json(response);
 });
 
+// Swagger documentation
+app.use(
+  '/api/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'Auth Service API Docs',
+  })
+);
+
+// Swagger JSON endpoint
+app.get('/api/docs.json', (_req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
 // Auth routes
 app.use('/api/v1/auth', authRoutes);
 
