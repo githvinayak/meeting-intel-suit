@@ -302,3 +302,112 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
     });
   }
 };
+
+export const getProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+      return;
+    }
+
+    const profile = await authService.getUserProfile(userId);
+
+    if (!profile) {
+      res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile retrieved successfully',
+      data: profile,
+    });
+  } catch (error: any) {
+    logger.error('Get profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve profile',
+    });
+  }
+};
+
+export const updateProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+      return;
+    }
+
+    const { name, profilePic } = req.body;
+
+    // Validation: At least one field should be provided
+    if (!name && !profilePic) {
+      res.status(400).json({
+        success: false,
+        message: 'At least one field (name or profilePic) is required',
+      });
+      return;
+    }
+
+    // Validation: Name should be non-empty if provided
+    if (name !== undefined && typeof name === 'string' && name.trim().length === 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Name cannot be empty',
+      });
+      return;
+    }
+
+    // Validation: ProfilePic should be valid URL if provided
+    if (profilePic !== undefined && profilePic !== null) {
+      try {
+        new URL(profilePic);
+      } catch {
+        res.status(400).json({
+          success: false,
+          message: 'ProfilePic must be a valid URL',
+        });
+        return;
+      }
+    }
+
+    const updatedProfile = await authService.updateUserProfile(userId, {
+      name: name?.trim(),
+      profilePic,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: updatedProfile,
+    });
+  } catch (error: any) {
+    logger.error('Update profile error:', error);
+
+    if (error.message === 'User not found') {
+      res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+      return;
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update profile',
+    });
+  }
+};
