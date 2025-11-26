@@ -38,7 +38,7 @@ export interface MeetingResponse {
   updatedAt: Date;
 }
 
-class MeetingService {
+export class MeetingService {
   /**
    * Create a new meeting
    */
@@ -73,9 +73,7 @@ class MeetingService {
     }
   }
 
-  /**
-   * Get meeting by ID
-   */
+
   async getMeetingById(
     meetingId: string,
     userId: string
@@ -94,7 +92,7 @@ class MeetingService {
       }
 
       // Check if user has access (created by user or is participant)
-      const hasAccess = 
+      const hasAccess =
         meeting.createdBy.toString() === userId ||
         meeting.participants.some(p => p.userId?.toString() === userId);
 
@@ -191,6 +189,3 @@ class MeetingService {
     };
   }
 }
-
-// Export singleton instance
-export const meetingService = new MeetingService();
