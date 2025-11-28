@@ -15,6 +15,7 @@ const REFRESH_TOKEN_EXPIRY: ExpiresIn =
 export interface TokenPayload {
   userId: string;
   email: string;
+  name: string;
   role?: string;
   tokenId?: string;
 }
@@ -22,6 +23,7 @@ export interface TokenPayload {
 export interface DecodedToken extends JwtPayload {
   userId: string;
   email: string;
+  name: string;
   role?: string;
   tokenId?: string;
 }
@@ -31,6 +33,7 @@ export const generateAccessToken = (payload: TokenPayload): string => {
     const tokenPayload: Record<string, any> = {
       userId: payload.userId,
       email: payload.email,
+      name: payload.name,
     };
 
     // Only include role if present
@@ -53,6 +56,7 @@ export const generateRefreshToken = (payload: TokenPayload): string => {
     const tokenPayload: Record<string, any> = {
       userId: payload.userId,
       email: payload.email,
+      name: payload.name,
     };
 
     // Include role if present
@@ -80,11 +84,11 @@ export const verifyToken = (token: string): DecodedToken => {
     const decoded = jwt.verify(token, JWT_SECRET, {
       issuer: 'meeting-intel-auth',
     });
-    
+
     if (typeof decoded === 'string') {
       throw new Error('Invalid token format');
     }
-    
+
     return decoded as DecodedToken;
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
