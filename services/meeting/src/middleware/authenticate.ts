@@ -16,21 +16,22 @@ export const authenticate = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Extract token from Authorization header
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res.status(401).json({
         success: false,
-        message: 'No token provided. Authorization header must be: Bearer <token>'
+        message: 'No token provided. Authorization header must be: Bearer <token>',
       });
       return;
     }
 
     const token = authHeader.split(' ')[1];
-
-    // Verify token by calling Auth Service
     const authServiceUrl = process.env.AUTH_SERVICE_URL;
+
+    // ADD THIS DEBUG LOGGING
+    console.log('🔍 Auth Service URL:', authServiceUrl);
+    console.log('🔍 Calling:', `${authServiceUrl}/api/auth/verify`);
 
     if (!authServiceUrl) {
       throw new Error('AUTH_SERVICE_URL not configured');
@@ -39,52 +40,60 @@ export const authenticate = async (
     // Call Auth Service to verify token
     const response = await axios.get(`${authServiceUrl}/api/auth/verify`, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
+      timeout: 5000, // ADD TIMEOUT
     });
 
-    // If verification successful, attach user data to request
+    console.log('✅ Auth Service response:', response.data); // ADD THIS
+
     if (response.data.success && response.data.data.user) {
       req.user = {
         userId: response.data.data.user.id,
         email: response.data.data.user.email,
-        name: response.data.data.user.name
+        name: response.data.data.user.name,
       };
 
-      next(); // Proceed to next middleware/controller
+      next();
     } else {
       res.status(401).json({
         success: false,
-        message: 'Invalid token'
+        message: 'Invalid token',
       });
       return;
     }
-
   } catch (error) {
-    // Handle different error scenarios
+    // ADD DETAILED ERROR LOGGING
+    console.error('❌ Authentication error:', error);
+
     if (axios.isAxiosError(error)) {
+      console.error('Axios error details:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+      });
+
       if (error.response?.status === 401) {
         res.status(401).json({
           success: false,
-          message: 'Token expired or invalid'
+          message: 'Token expired or invalid',
         });
         return;
       }
 
       if (error.code === 'ECONNREFUSED') {
-        console.error('❌ Auth Service is not running');
+        console.error('❌ Auth Service is not running on', process.env.AUTH_SERVICE_URL);
         res.status(503).json({
           success: false,
-          message: 'Authentication service unavailable'
+          message: 'Authentication service unavailable',
         });
         return;
       }
     }
 
-    console.error('Authentication error:', error);
     res.status(500).json({
       success: false,
-      message: 'Authentication failed'
+      message: 'Authentication failed',
     });
   }
 };
