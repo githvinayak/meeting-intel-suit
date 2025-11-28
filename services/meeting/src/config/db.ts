@@ -8,7 +8,7 @@ export const connectDatabase = async (): Promise<void> => {
     }
     await mongoose.connect(mongoUri);
 
-    console.log('✅ MongoDB connected successfully to meeting-intel-auth');
+    console.log('✅ MongoDB connected successfully to meeting-intel-meeting');
 
     // Handle connection events
     mongoose.connection.on('error', (error) => {
