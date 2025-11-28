@@ -97,6 +97,41 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Verify JWT token (for inter-service communication)
+ */
+export const verifyToken = async (req: Request, res: Response) => {
+  try {
+
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: 'Invalid token',
+      });
+      return;
+    }
+
+    // Return user data
+    return res.status(200).json({
+      success: true,
+      message: 'Token is valid',
+      data: {
+        user: {
+          id: req.user.userId,
+          email: req.user.email,
+          name: req.user.name,
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Token verification failed',
+    });
+  }
+};
+
 export const refreshToken = async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body;
@@ -151,7 +186,7 @@ export const refreshToken = async (req: Request, res: Response) => {
   }
 };
 
-export const logout = async (req: Request, res: Response): Promise<void> => {
+export const logout = async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body;
 
@@ -167,47 +202,47 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
     // Call service
     await authService.logout(refreshToken);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: 'Logged out successfully',
     });
   } catch (error: any) {
     logger.error('Logout error:', error);
-    res.status(401).json({
+    return res.status(401).json({
       success: false,
       message: error.message || 'Logout failed',
     });
   }
 };
 
-export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
 
     await passwordService.requestPasswordReset(email);
 
     // Always return success (don't reveal if email exists)
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: 'If an account exists with this email, you will receive a password reset link',
     });
   } catch (error: any) {
     console.error('Forgot password error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to process password reset request',
     });
   }
 };
 
-export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+export const resetPassword = async (req: Request, res: Response) => {
   try {
     // Validate request
     const { token, newPassword } = req.body;
 
     await passwordService.resetPassword(token, newPassword);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: 'Password reset successful. You can now login with your new password',
     });
@@ -222,14 +257,14 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to reset password',
     });
   }
 };
 
-export const verifyResetToken = async (req: Request, res: Response): Promise<void> => {
+export const verifyResetToken = async (req: Request, res: Response) => {
   try {
     const { token } = req.body;
 
@@ -251,20 +286,20 @@ export const verifyResetToken = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: 'Token is valid',
     });
   } catch (error: any) {
     console.error('Verify token error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to verify token',
     });
   }
 };
 
-export const changePassword = async (req: Request, res: Response): Promise<void> => {
+export const changePassword = async (req: Request, res: Response) => {
   try {
     // Validate request
 
@@ -281,7 +316,7 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
 
     await passwordService.changePassword(userId, currentPassword, newPassword);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: 'Password changed successfully',
     });
@@ -296,14 +331,14 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to change password',
     });
   }
 };
 
-export const getProfile = async (req: Request, res: Response): Promise<void> => {
+export const getProfile = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
 
@@ -325,21 +360,21 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: 'Profile retrieved successfully',
       data: profile,
     });
   } catch (error: any) {
     logger.error('Get profile error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to retrieve profile',
     });
   }
 };
 
-export const updateProfile = async (req: Request, res: Response): Promise<void> => {
+export const updateProfile = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
 
@@ -389,7 +424,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
       profilePic,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
       data: updatedProfile,
@@ -405,7 +440,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to update profile',
     });

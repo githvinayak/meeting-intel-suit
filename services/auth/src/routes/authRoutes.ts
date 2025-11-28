@@ -10,6 +10,7 @@ import {
   changePassword,
   updateProfile,
   getProfile,
+  verifyToken,
 } from '../controllers/authController';
 import { authenticate } from '../middleware/authenticate';
 import { loginLimiter, registerLimiter } from '../middleware/rateLimiter';
@@ -239,6 +240,7 @@ router.get('/me', authenticate, (req, res) => {
   });
 });
 
+router.get('/verify', authenticate, verifyToken);
 /**
  * @swagger
  * /api/v1/auth/forgot-password:
