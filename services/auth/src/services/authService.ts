@@ -105,6 +105,7 @@ export class AuthService {
       userId: user._id.toString(),
       email: user.email,
       role: user.role,
+      name: user.name,
     });
 
     // 5. Generate refresh token (with tokenId)
@@ -112,6 +113,7 @@ export class AuthService {
       userId: user._id.toString(),
       email: user.email,
       role: user.role,
+      name: user.name,
       tokenId: tokenId,
     });
 
@@ -152,7 +154,7 @@ export class AuthService {
     }
 
     // 2. Extract userId and tokenId from decoded token
-    const { userId, email, tokenId, role } = decoded;
+    const { userId, email, name, tokenId, role } = decoded;
 
     if (!tokenId) {
       logger.error('Refresh token missing tokenId');
@@ -180,6 +182,7 @@ export class AuthService {
     const newAccessToken = generateAccessToken({
       userId,
       email,
+      name,
       role,
     });
 
@@ -188,6 +191,7 @@ export class AuthService {
     const newRefreshToken = generateRefreshToken({
       userId,
       email,
+      name,
       role,
       tokenId: newTokenId,
     });
