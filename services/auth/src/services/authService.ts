@@ -9,6 +9,7 @@ import {
 } from '../utils/token';
 import { generateAccessToken, generateRefreshToken, verifyToken } from '../utils/jwt';
 import { logger } from '../utils/logger';
+import { EmailService } from './emailService';
 
 interface UserResponse {
   _id: string;
@@ -31,6 +32,24 @@ export interface LoginResponse {
   };
 }
 
+export interface UpdateProfileInput {
+  name?: string;
+  profilePic?: string;
+}
+
+export interface UserProfileResponse {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  profilePic?: string;
+  isEmailVerified: boolean;
+  lastLogin?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const emailService = new EmailService();
 export class AuthService {
   private readonly SALT_ROUNDS = 12;
 
@@ -44,6 +63,14 @@ export class AuthService {
       password: hashedPassword,
       profilePic: userData.profilePic,
     });
+
+    // Send welcome email (non-blocking - don't await)
+    emailService.sendWelcomeEmail(user.email, user.name).catch((error) => {
+      logger.error('Failed to send welcome email:', error);
+      // Don't throw - registration should succeed even if email fails
+    });
+
+    logger.info(`New user registered: ${user.email}`);
 
     return {
       _id: user._id.toString(),
@@ -177,26 +204,84 @@ export class AuthService {
   }
 
   async logout(refreshToken: string): Promise<void> {
-  // 1. Verify the refresh token
-  let decoded;
-  try {
-    decoded = verifyToken(refreshToken);
-  } catch (error: any) {
-    logger.error('Logout - Invalid refresh token:', error.message);
-    throw new Error('Invalid refresh token');
+    // 1. Verify the refresh token
+    let decoded;
+    try {
+      decoded = verifyToken(refreshToken);
+    } catch (error: any) {
+      logger.error('Logout - Invalid refresh token:', error.message);
+      throw new Error('Invalid refresh token');
+    }
+
+    // 2. Extract userId and tokenId
+    const { userId, tokenId } = decoded;
+
+    if (!tokenId) {
+      logger.error('Logout - Refresh token missing tokenId');
+      throw new Error('Invalid refresh token format');
+    }
+
+    // 3. Delete refresh token from Redis
+    await deleteRefreshToken(userId, tokenId);
+
+    logger.info(`User logged out successfully: ${userId}`);
   }
 
-  // 2. Extract userId and tokenId
-  const { userId, tokenId } = decoded;
+  async getUserProfile(userId: string): Promise<UserProfileResponse | null> {
+    const user = await User.findById(userId).select('-password');
 
-  if (!tokenId) {
-    logger.error('Logout - Refresh token missing tokenId');
-    throw new Error('Invalid refresh token format');
+    if (!user) {
+      return null;
+    }
+
+    return {
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profilePic: user.profilePic,
+      isEmailVerified: user.isEmailVerified,
+      lastLogin: user.lastLogin,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 
-  // 3. Delete refresh token from Redis
-   await deleteRefreshToken(userId, tokenId);
+  async updateUserProfile(
+    userId: string,
+    updates: UpdateProfileInput
+  ): Promise<UserProfileResponse> {
+    // Find user
+    const user = await User.findById(userId);
 
-  logger.info(`User logged out successfully: ${userId}`);
-}
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Update fields (only if provided)
+    if (updates.name !== undefined) {
+      user.name = updates.name;
+    }
+
+    if (updates.profilePic !== undefined) {
+      user.profilePic = updates.profilePic;
+    }
+
+    // Save changes
+    await user.save();
+
+    logger.info(`Profile updated for user: ${user.email}`);
+
+    return {
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profilePic: user.profilePic,
+      isEmailVerified: user.isEmailVerified,
+      lastLogin: user.lastLogin,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+  }
 }
