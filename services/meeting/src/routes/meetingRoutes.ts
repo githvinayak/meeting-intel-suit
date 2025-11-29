@@ -52,11 +52,7 @@ const router: Router = express.Router();
  *       500:
  *         description: Server error
  */
-router.post(
-    '/meetings',
-    authenticate,
-    createMeeting
-);
+router.post('/meetings', authenticate, createMeeting);
 
 /**
  * @swagger
@@ -129,11 +125,7 @@ router.post(
  *       500:
  *         description: Server error
  */
-router.get(
-    '/meetings',
-    authenticate,
-    listMeetings
-);
+router.get('/meetings', authenticate, listMeetings);
 
 /**
  * @swagger
@@ -175,10 +167,6 @@ router.get(
  *       500:
  *         description: Server error
  */
-router.get(
-    'meetings/:id',
-    authenticate,
-    getMeetingById
-);
+router.get('/:id', authenticate, getMeetingById);
 
 export default router;

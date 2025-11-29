@@ -52,7 +52,7 @@ export interface IMeeting extends Document {
   decisions: IDecision[];
   participants: IParticipant[];
 
-  status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
+  status: 'scheduled' | 'in-progress' | 'pending' | 'completed' | 'cancelled';
 
   // NEW: Advanced features
   sentiment?: ISentimentAnalysis;
@@ -125,7 +125,7 @@ const MeetingSchema = new Schema<IMeeting>(
 
     status: {
       type: String,
-      enum: ['scheduled', 'in-progress', 'completed', 'cancelled'],
+      enum: ['scheduled', 'in-progress', 'pending', 'completed', 'cancelled'],
       default: 'scheduled',
     },
 

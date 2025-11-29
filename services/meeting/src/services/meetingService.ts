@@ -42,10 +42,7 @@ export class MeetingService {
   /**
    * Create a new meeting
    */
-  async createMeeting(
-    userId: string,
-    meetingData: CreateMeetingDTO
-  ): Promise<MeetingResponse> {
+  async createMeeting(userId: string, meetingData: CreateMeetingDTO): Promise<MeetingResponse> {
     try {
       // Validate userId is valid ObjectId
       if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -58,7 +55,7 @@ export class MeetingService {
         createdBy: new mongoose.Types.ObjectId(userId),
         actionItems: [],
         decisions: [],
-        status: 'scheduled'
+        status: 'scheduled',
       });
 
       // Save to database
@@ -66,18 +63,13 @@ export class MeetingService {
 
       // Return formatted response
       return this.formatMeetingResponse(meeting);
-
     } catch (error) {
       console.error('Error creating meeting:', error);
       throw error;
     }
   }
 
-
-  async getMeetingById(
-    meetingId: string,
-    userId: string
-  ): Promise<MeetingResponse> {
+  async getMeetingById(meetingId: string, userId: string): Promise<MeetingResponse> {
     try {
       // Validate IDs
       if (!mongoose.Types.ObjectId.isValid(meetingId)) {
@@ -94,14 +86,13 @@ export class MeetingService {
       // Check if user has access (created by user or is participant)
       const hasAccess =
         meeting.createdBy.toString() === userId ||
-        meeting.participants.some(p => p.userId?.toString() === userId);
+        meeting.participants.some((p) => p.userId?.toString() === userId);
 
       if (!hasAccess) {
         throw new Error('Access denied to this meeting');
       }
 
       return this.formatMeetingResponse(meeting);
-
     } catch (error) {
       console.error('Error fetching meeting:', error);
       throw error;
@@ -130,8 +121,8 @@ export class MeetingService {
       const query: any = {
         $or: [
           { createdBy: new mongoose.Types.ObjectId(userId) },
-          { 'participants.userId': new mongoose.Types.ObjectId(userId) }
-        ]
+          { 'participants.userId': new mongoose.Types.ObjectId(userId) },
+        ],
       };
 
       // Apply filters
@@ -153,10 +144,9 @@ export class MeetingService {
         .skip(filters?.skip || 0);
 
       return {
-        meetings: meetings.map(m => this.formatMeetingResponse(m)),
-        total
+        meetings: meetings.map((m) => this.formatMeetingResponse(m)),
+        total,
       };
-
     } catch (error) {
       console.error('Error listing meetings:', error);
       throw error;
@@ -178,14 +168,14 @@ export class MeetingService {
       participants: meeting.participants,
       status: meeting.status,
       sentiment: meeting.sentiment,
-      relatedMeetings: meeting.relatedMeetings?.map(id => id.toString()),
+      relatedMeetings: meeting.relatedMeetings?.map((id) => id.toString()),
       projectId: meeting.projectId,
       createdBy: meeting.createdBy.toString(),
       scheduledAt: meeting.scheduledAt,
       startedAt: meeting.startedAt,
       completedAt: meeting.completedAt,
       createdAt: meeting.createdAt,
-      updatedAt: meeting.updatedAt
+      updatedAt: meeting.updatedAt,
     };
   }
 }

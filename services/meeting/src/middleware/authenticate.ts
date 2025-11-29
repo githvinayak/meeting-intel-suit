@@ -38,7 +38,7 @@ export const authenticate = async (
     }
 
     // Call Auth Service to verify token
-    const response = await axios.get(`${authServiceUrl}/api/auth/verify`, {
+    const response = await axios.get(`${authServiceUrl}/api/v1/auth/verify`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
