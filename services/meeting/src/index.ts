@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { ApiResponse } from '@meeting-intelligence/shared-types';
 import meetingRoutes from './routes/meetingRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger/swagger';
 import { connectDatabase } from './config/db';
@@ -11,6 +12,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 3002;
+console.log(' meeting service port:', PORT);
 
 // Middleware
 app.use(helmet());
@@ -49,6 +51,7 @@ app.get('/health', (_req: Request, res: Response) => {
 });
 
 app.use('/api/v1/meeting', meetingRoutes);
+app.use('/api/v1/meeting', uploadRoutes);
 
 // Start server
 app.listen(PORT, () => {

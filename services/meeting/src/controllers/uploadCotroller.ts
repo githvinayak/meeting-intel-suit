@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { getMaxFileSizeMB } from '../utils/fileValidation';
 import { UploadService } from '../services/uploadService';
 import { AuthenticatedRequest } from '../middleware/authenticate';

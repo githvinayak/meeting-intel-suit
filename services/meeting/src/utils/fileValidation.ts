@@ -21,7 +21,7 @@ const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
  * Validates file type based on mimetype and extension
  */
 export const fileFilter = (
-  req: Request,
+  _req: Request,
   file: Express.Multer.File,
   cb: multer.FileFilterCallback
 ): void => {

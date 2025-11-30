@@ -103,6 +103,9 @@ services:
       PORT: 3002
       MONGODB_URI: mongodb://admin:admin123@mongodb:27017/meeting-intel-meeting?authSource=admin
       RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+      CLOUDINARY_CLOUD_NAME: dxkm2qkm2
+      CLOUDINARY_API_KEY: 211538659341579
+      CLOUDINARY_API_SECRET: HT6i8vSnC2NDJRpzS9GobVVNb70
     depends_on:
       - mongodb
       - rabbitmq
