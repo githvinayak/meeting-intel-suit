@@ -106,8 +106,12 @@ services:
       CLOUDINARY_CLOUD_NAME: dxkm2qkm2
       CLOUDINARY_API_KEY: 211538659341579
       CLOUDINARY_API_SECRET: HT6i8vSnC2NDJRpzS9GobVVNb70
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: admin123
     depends_on:
       - mongodb
+      - redis
       - rabbitmq
     networks:
       - meeting-network
