@@ -71,7 +71,7 @@ export const getMeetingById = async (req: AuthenticatedRequest, res: Response) =
     // Call service to get meeting
     const meeting = await meetingService.getMeetingById(id, userId);
 
-   return res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: { meeting },
     });
@@ -103,7 +103,7 @@ export const getMeetingById = async (req: AuthenticatedRequest, res: Response) =
     }
 
     console.error('Error in getMeetingById controller:', error);
-   return res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to fetch meeting',
     });
@@ -146,6 +146,34 @@ export const listMeetings = async (req: AuthenticatedRequest, res: Response) => 
     return res.status(500).json({
       success: false,
       message: err.message || 'Server error',
+    });
+  }
+};
+
+export const getMeetingStatus = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = getMeetingParamsSchema.parse(req.params);
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+      });
+      return;
+    }
+    const status = await meetingService.getMeetingStatus({ meetingId: id });
+
+    res.status(200).json({
+      success: true,
+      data: status,
+    });
+  } catch (error: any) {
+    console.error('Get meeting status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get meeting status',
+      error: error.message,
     });
   }
 };
