@@ -1,6 +1,11 @@
 import express, { Router } from 'express';
 import { authenticate } from '../middleware/authenticate';
-import { createMeeting, getMeetingById, listMeetings } from '../controllers/meetingController';
+import {
+  createMeeting,
+  getMeetingById,
+  getMeetingStatus,
+  listMeetings,
+} from '../controllers/meetingController';
 
 const router: Router = express.Router();
 
@@ -168,5 +173,64 @@ router.get('/meetings', authenticate, listMeetings);
  *         description: Server error
  */
 router.get('/:id', authenticate, getMeetingById);
+
+/**
+ * @swagger
+ * /api/meetings/{id}/status:
+ *   get:
+ *     summary: Get meeting processing status
+ *     description: Returns the current processing status and job progress for a meeting
+ *     tags:
+ *       - Meetings
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Meeting ID
+ *         example: "674a5b3c8d9e1f2a3b4c5d6e"
+ *     responses:
+ *       200:
+ *         description: Meeting status retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     meetingId:
+ *                       type: string
+ *                     meetingStatus:
+ *                       type: string
+ *                       enum: [scheduled, pending, processing, completed, cancelled]
+ *                     statusMessage:
+ *                       type: string
+ *                       example: "Processing in progress"
+ *                     overallProgress:
+ *                       type: number
+ *                       example: 33
+ *                     jobs:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: number
+ *                         completed:
+ *                           type: number
+ *                         active:
+ *                           type: number
+ *                         waiting:
+ *                           type: number
+ *                         failed:
+ *                           type: number
+ *       404:
+ *         description: Meeting not found
+ */
+router.get('/:id/status', getMeetingStatus);
 
 export default router;
