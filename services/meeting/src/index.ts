@@ -8,6 +8,7 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger/swagger';
 import { connectDatabase } from './config/db';
 import dotenv from 'dotenv';
+import { startAIWorker } from './worker/aiWorker';
 
 dotenv.config();
 const app: Application = express();
@@ -21,6 +22,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 connectDatabase();
+startAIWorker();
 // Swagger documentation
 app.use(
   '/api/docs',
