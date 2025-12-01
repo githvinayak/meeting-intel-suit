@@ -1,5 +1,6 @@
 import { Meeting, IMeeting } from '../models/Meeting';
-import mongoose from 'mongoose';
+import mongoose, { ObjectId } from 'mongoose';
+import { getMeetingJobs } from '../queue/aiQueue';
 
 // DTOs (Data Transfer Objects)
 export interface CreateMeetingDTO {
@@ -36,6 +37,32 @@ export interface MeetingResponse {
   completedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface jobStatuses {
+  id: string;
+  type: string;
+  status: string; // 'waiting', 'active', 'completed', 'failed'
+  progress: number;
+  failedReason: string | null;
+  createdAt: Date;
+  processedAt: Date | null;
+  finishedAt: Date | null;
+  attemptsMade: number | 0;
+}
+export interface MeetingStatusResponse {
+  meetingId: string;
+  meetingStatus: string;
+  statusMessage: string;
+  overallProgress: number;
+  jobs: {
+    total: number;
+    completed: any[] | number;
+    active: any[] | number;
+    waiting: any[] | number;
+    failed: any[] | number;
+  };
+  jobDetails: jobStatuses[];
 }
 
 export class MeetingService {
@@ -176,6 +203,81 @@ export class MeetingService {
       completedAt: meeting.completedAt,
       createdAt: meeting.createdAt,
       updatedAt: meeting.updatedAt,
+    };
+  }
+
+  async getMeetingStatus(meetingId: { meetingId: string }): Promise<MeetingStatusResponse> {
+    const { meetingId: id } = meetingId;
+    // Validate meetingId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error('Invalid meeting ID');
+    }
+
+    const meeting = await Meeting.findById(id);
+
+    if (!meeting) {
+      throw new Error('Meeting not found');
+    }
+
+    // Get all jobs for this meeting
+    const jobs = await getMeetingJobs(id);
+
+    // Format job statuses
+    const jobStatuses = await Promise.all(
+      jobs.map(async (job: any) => {
+        const state = await job.getState();
+        const progress = job.progress();
+        const failedReason = job.failedReason;
+
+        return {
+          id: job.id,
+          type: job.name,
+          status: state, // 'waiting', 'active', 'completed', 'failed'
+          progress: progress || 0,
+          failedReason: failedReason || null,
+          createdAt: new Date(job.timestamp),
+          processedAt: job.processedOn ? new Date(job.processedOn) : null,
+          finishedAt: job.finishedOn ? new Date(job.finishedOn) : null,
+          attemptsMade: job.attemptsMade || 0,
+        };
+      })
+    );
+
+    // Calculate overall progress
+    const totalJobs = jobStatuses.length;
+    const completedJobs = jobStatuses.filter((j: any) => j.status === 'completed').length;
+    const failedJobs = jobStatuses.filter((j: any) => j.status === 'failed').length;
+    const activeJobs = jobStatuses.filter((j: any) => j.status === 'active').length;
+    const waitingJobs = jobStatuses.filter((j: any) => j.status === 'waiting').length;
+
+    const overallProgress = totalJobs > 0 ? Math.round((completedJobs / totalJobs) * 100) : 0;
+
+    // Determine overall status message
+    let statusMessage = '';
+    if (meeting.status === 'completed') {
+      statusMessage = 'All processing completed';
+    } else if (activeJobs > 0) {
+      statusMessage = 'Processing in progress';
+    } else if (waitingJobs > 0) {
+      statusMessage = 'Waiting in queue';
+    } else if (failedJobs > 0) {
+      statusMessage = 'Some jobs failed';
+    } else {
+      statusMessage = 'Ready';
+    }
+    return {
+      meetingId: meeting._id.toString(),
+      meetingStatus: meeting.status,
+      statusMessage,
+      overallProgress,
+      jobs: {
+        total: totalJobs,
+        completed: completedJobs,
+        active: activeJobs,
+        waiting: waitingJobs,
+        failed: failedJobs,
+      },
+      jobDetails: jobStatuses,
     };
   }
 }
