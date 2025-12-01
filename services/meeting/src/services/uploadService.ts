@@ -2,6 +2,7 @@ import cloudinary from '../config/storage';
 import { validateFileSize } from '../utils/fileValidation';
 import { Meeting } from '../models/Meeting';
 import mongoose from 'mongoose';
+import { addTranscriptionJob, JobPriority } from '../queue/aiQueue';
 
 interface UploadFileParams {
   file: Express.Multer.File;
@@ -68,6 +69,16 @@ export class UploadService {
 
     await meeting.save();
 
+    await addTranscriptionJob(
+      {
+        meetingId: meeting._id.toString(),
+        fileUrl: fileUrl,
+        fileSize: file.size,
+        userId: userId,
+        createdAt: new Date(),
+      },
+      JobPriority.NORMAL
+    );
     // Return structured result
     return {
       meetingId: meeting._id.toString(),
@@ -111,6 +122,16 @@ export class UploadService {
     meeting.status = 'pending'; // Ready for transcription
     await meeting.save();
 
+    await addTranscriptionJob(
+      {
+        meetingId: meeting._id.toString(),
+        fileUrl: fileUrl,
+        fileSize: file.size,
+        userId: userId,
+        createdAt: new Date(),
+      },
+      JobPriority.NORMAL
+    );
     // Return structured result
     return {
       meetingId: meeting._id.toString(),
