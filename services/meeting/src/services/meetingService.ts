@@ -1,5 +1,5 @@
 import { Meeting, IMeeting } from '../models/Meeting';
-import mongoose, { ObjectId } from 'mongoose';
+import mongoose from 'mongoose';
 import { getMeetingJobs } from '../queue/aiQueue';
 
 // DTOs (Data Transfer Objects)

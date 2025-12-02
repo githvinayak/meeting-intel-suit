@@ -1,10 +1,11 @@
 import Redis from 'ioredis';
+import { config } from './config';
 
 // Redis connection configuration
 export const redisConfig = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD || undefined,
+  host: config.redis.host || 'localhost',
+  port: config.redis.port || 6379,
+  password: config.redis.password || undefined,
   maxRetriesPerRequest: null, // Required for Bull
   enableReadyCheck: false, // Required for Bull
 };

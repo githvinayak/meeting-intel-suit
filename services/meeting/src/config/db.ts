@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
+import { config } from './config';
 
 export const connectDatabase = async (): Promise<void> => {
   try {
-    const mongoUri = process.env.MONGODB_URI;
+    const mongoUri = config.database.uri;
     if (!mongoUri) {
       throw new Error('❌ Missing MONGODB_URI environment variable');
     }

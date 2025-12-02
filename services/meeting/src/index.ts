@@ -7,12 +7,11 @@ import uploadRoutes from './routes/uploadRoutes';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger/swagger';
 import { connectDatabase } from './config/db';
-import dotenv from 'dotenv';
 import { startAIWorker } from './worker/aiWorker';
+import { config } from './config/config';
 
-dotenv.config();
 const app: Application = express();
-const PORT = process.env.PORT || 3002;
+const PORT = config.server.port || 3002;
 console.log(' meeting service port:', PORT);
 
 // Middleware
@@ -54,6 +53,32 @@ app.get('/health', (_req: Request, res: Response) => {
 
 app.use('/api/v1/meeting', meetingRoutes);
 app.use('/api/v1/meeting', uploadRoutes);
+
+console.log('✅ Configuration loaded successfully');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('🚀 Server Configuration:');
+console.log(`   Port: ${config.server.port}`);
+console.log(`   Environment: ${config.server.nodeEnv}`);
+console.log(`   Service: ${config.server.serviceName}`);
+console.log('');
+console.log('💾 Database:');
+console.log(`   MongoDB: ${config.database.uri.includes('mongodb') ? '✓ Connected' : '✗ Invalid'}`);
+console.log(`   Redis: ${config.redis.host}:${config.redis.port}`);
+console.log('');
+console.log('🤖 OpenAI Configuration:');
+console.log(`   API Key: ${config.openai.apiKey ? '✓ Present' : '✗ Missing'}`);
+console.log(`   Model: ${config.openai.model}`);
+console.log(`   Mode: ${config.openai.useMock ? '🎭 MOCK (Free)' : '🤖 REAL (Paid)'}`);
+console.log('');
+console.log('🎵 Audio Limits:');
+console.log(`   Max Size: ${config.audio.maxSizeMB}MB`);
+console.log(`   Max Duration: ${config.audio.maxDuration}s`);
+console.log('');
+console.log('⚡ Rate Limits:');
+console.log(`   Concurrent: ${config.limits.maxConcurrent}`);
+console.log(`   Per Day: ${config.limits.maxPerDay}`);
+console.log(`   Cost Warning: $${config.limits.warnThreshold}`);
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
 // Start server
 app.listen(PORT, () => {

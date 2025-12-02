@@ -50,7 +50,9 @@ export const processAIJob = async (job: Job): Promise<void> => {
  * Implementation: Day 11
  */
 const processTranscription = async (job: Job<TranscriptionJobData>): Promise<void> => {
-  const { meetingId, fileUrl, fileSize } = job.data;
+  const { meetingId 
+    // ,fileUrl, fileSize 
+  } = job.data;
 
   console.log(`📝 Transcribing meeting ${meetingId}...`);
 
@@ -79,7 +81,9 @@ const processTranscription = async (job: Job<TranscriptionJobData>): Promise<voi
  * Implementation: Day 12
  */
 const processExtraction = async (job: Job<ExtractionJobData>): Promise<void> => {
-  const { meetingId, transcript } = job.data;
+  const { meetingId
+    // , transcript 
+  } = job.data;
 
   console.log(`🔍 Extracting data from meeting ${meetingId}...`);
 
@@ -102,7 +106,9 @@ const processExtraction = async (job: Job<ExtractionJobData>): Promise<void> => 
  * Implementation: Day 12
  */
 const processSentimentAnalysis = async (job: Job<SentimentAnalysisJobData>): Promise<void> => {
-  const { meetingId, transcript, participants } = job.data;
+  const { meetingId 
+    // , transcript, participants
+   } = job.data;
 
   console.log(`😊 Analyzing sentiment for meeting ${meetingId}...`);
 
@@ -137,7 +143,9 @@ const processSentimentAnalysis = async (job: Job<SentimentAnalysisJobData>): Pro
  * Implementation: Day 13
  */
 const processTimeline = async (job: Job<TimelineJobData>): Promise<void> => {
-  const { meetingId, transcript, duration } = job.data;
+  const { meetingId 
+    // , transcript, duration
+   } = job.data;
 
   console.log(`⏱️ Generating timeline for meeting ${meetingId}...`);
 

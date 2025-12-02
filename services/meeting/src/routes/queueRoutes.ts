@@ -1,5 +1,5 @@
 import express, { Router } from 'express';
-import { getQueueStats } from '../controllers/queueController';
+import { getQueueStats } from '../controllers/jobController';
 
 const router: Router = express.Router();
 

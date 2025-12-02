@@ -9,18 +9,18 @@ const options: swaggerJsdoc.Options = {
       description: 'AI-powered meeting transcription and intelligence platform - Meeting Service',
       contact: {
         name: 'API Support',
-        email: 'support@meetingintel.com'
-      }
+        email: 'support@meetingintel.com',
+      },
     },
     servers: [
       {
         url: 'http://localhost:3002',
-        description: 'Development server'
+        description: 'Development server',
       },
       {
         url: 'http://localhost:3000',
-        description: 'API Gateway (Production)'
-      }
+        description: 'API Gateway (Production)',
+      },
     ],
     components: {
       securitySchemes: {
@@ -28,27 +28,27 @@ const options: swaggerJsdoc.Options = {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          description: 'Enter JWT token obtained from Auth Service'
-        }
-      }
+          description: 'Enter JWT token obtained from Auth Service',
+        },
+      },
     },
     security: [
       {
-        bearerAuth: []
-      }
+        bearerAuth: [],
+      },
     ],
     tags: [
       {
         name: 'Meetings',
-        description: 'Meeting management endpoints'
+        description: 'Meeting management endpoints',
       },
       {
         name: 'Health',
-        description: 'Service health check'
-      }
-    ]
+        description: 'Service health check',
+      },
+    ],
   },
-  apis: ['./src/routes/*.ts', './src/index.ts'] // Path to route files with Swagger comments
+  apis: ['./src/routes/*.ts', './src/index.ts'], // Path to route files with Swagger comments
 };
 
 export const swaggerSpec = swaggerJsdoc(options);

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
+import { config } from '../config/config';
 
 // Extend Express Request to include user data
 export interface AuthenticatedRequest extends Request {
@@ -27,7 +28,7 @@ export const authenticate = async (
     }
 
     const token = authHeader.split(' ')[1];
-    const authServiceUrl = process.env.AUTH_SERVICE_URL;
+    const authServiceUrl = config.services.authServiceUrl;
 
     // ADD THIS DEBUG LOGGING
     console.log('🔍 Auth Service URL:', authServiceUrl);
@@ -82,7 +83,7 @@ export const authenticate = async (
       }
 
       if (error.code === 'ECONNREFUSED') {
-        console.error('❌ Auth Service is not running on', process.env.AUTH_SERVICE_URL);
+        console.error('❌ Auth Service is not running on', config.services.authServiceUrl);
         res.status(503).json({
           success: false,
           message: 'Authentication service unavailable',
