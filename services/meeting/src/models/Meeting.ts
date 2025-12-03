@@ -39,22 +39,61 @@ export interface ISentimentAnalysis {
   };
 }
 
+// ← ADD THIS: Transcript segment interface
+export interface ITranscriptSegment {
+  text: string;
+  speaker?: string;
+  timestamp: number; // Seconds from start
+  confidence?: number; // 0-1
+  sentiment?: 'positive' | 'negative' | 'neutral';
+}
+
+// ← ADD THIS: Enhanced transcript structure
+export interface ITranscript {
+  segments: ITranscriptSegment[];
+  fullText: string;
+  language: string;
+  duration: number; // Seconds
+}
+
+// ← ADD THIS: Processing metadata
+export interface IProcessing {
+  startedAt?: Date;
+  completedAt?: Date;
+  cost?: number; // USD
+  model?: string; // whisper-1, gpt-4, etc.
+  error?: string;
+}
+
 // Main Meeting Interface
 export interface IMeeting extends Document {
   _id: mongoose.Types.ObjectId;
   title: string;
   description?: string;
   fileUrl?: string;
-  transcript?: string;
+
+  // ← UPDATED: Enhanced transcript (now optional object instead of string)
+  transcript?: ITranscript;
+
+  // ← ADD THIS: Processing metadata
+  processing?: IProcessing;
 
   // Standard fields
   actionItems: IActionItem[];
   decisions: IDecision[];
   participants: IParticipant[];
 
-  status: 'scheduled' | 'in-progress' | 'pending' | 'completed' | 'cancelled';
+  // ← UPDATED: Added 'transcribed', 'processing', 'failed' statuses
+  status:
+    | 'scheduled'
+    | 'pending'
+    | 'processing'
+    | 'transcribed'
+    | 'completed'
+    | 'cancelled'
+    | 'failed';
 
-  // NEW: Advanced features
+  // Advanced features
   sentiment?: ISentimentAnalysis;
   relatedMeetings?: mongoose.Types.ObjectId[];
   projectId?: string;
@@ -87,8 +126,33 @@ const MeetingSchema = new Schema<IMeeting>(
       type: String,
       trim: true,
     },
+
+    // ← UPDATED: Enhanced transcript structure
     transcript: {
-      type: String,
+      segments: [
+        {
+          text: { type: String, required: true },
+          speaker: String,
+          timestamp: { type: Number, required: true },
+          confidence: Number,
+          sentiment: {
+            type: String,
+            enum: ['positive', 'negative', 'neutral'],
+          },
+        },
+      ],
+      fullText: String,
+      language: String,
+      duration: Number,
+    },
+
+    // ← ADD THIS: Processing metadata
+    processing: {
+      startedAt: Date,
+      completedAt: Date,
+      cost: Number,
+      model: String,
+      error: String,
     },
 
     actionItems: [
@@ -123,13 +187,22 @@ const MeetingSchema = new Schema<IMeeting>(
       },
     ],
 
+    // ← UPDATED: Added new statuses
     status: {
       type: String,
-      enum: ['scheduled', 'in-progress', 'pending', 'completed', 'cancelled'],
+      enum: [
+        'scheduled',
+        'pending',
+        'processing',
+        'transcribed',
+        'completed',
+        'cancelled',
+        'failed',
+      ],
       default: 'scheduled',
     },
 
-    // NEW: Advanced features
+    // Advanced features
     sentiment: {
       overall: {
         type: String,
