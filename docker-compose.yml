@@ -109,6 +109,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: admin123
+      OPENAI_API_KEY: your-openai-api-key
+      WHISPER_MODEL: whisper-1
     depends_on:
       - mongodb
       - redis
