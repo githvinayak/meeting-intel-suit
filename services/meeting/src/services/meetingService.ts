@@ -1,6 +1,6 @@
 import { Meeting, IMeeting } from '../models/Meeting';
 import mongoose from 'mongoose';
-import { getMeetingJobs } from '../queue/aiQueue';
+// import { getMeetingJobs } from '../queue/aiQueue';
 
 // DTOs (Data Transfer Objects)
 export interface CreateMeetingDTO {

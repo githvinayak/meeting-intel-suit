@@ -8,8 +8,8 @@ const openai = new OpenAI({
 });
 
 // Cost tracking (GPT-4 pricing as of 2024)
-const GPT4_INPUT_COST = 0.03 / 1000;   // $0.03 per 1K input tokens
-const GPT4_OUTPUT_COST = 0.06 / 1000;  // $0.06 per 1K output tokens
+const GPT4_INPUT_COST = 0.03 / 1000; // $0.03 per 1K input tokens
+const GPT4_OUTPUT_COST = 0.06 / 1000; // $0.06 per 1K output tokens
 
 // Raw extraction result (before database formatting)
 interface RawActionItem {
@@ -51,7 +51,8 @@ async function extractActionItems(transcript: string): Promise<{
       messages: [
         {
           role: 'system',
-          content: 'You are an expert meeting assistant that extracts action items from transcripts. Always return valid JSON.',
+          content:
+            'You are an expert meeting assistant that extracts action items from transcripts. Always return valid JSON.',
         },
         {
           role: 'user',
@@ -63,7 +64,7 @@ async function extractActionItems(transcript: string): Promise<{
     });
 
     const content = completion.choices[0].message.content || '[]';
-    
+
     // Parse response
     let parsed;
     try {
@@ -74,9 +75,7 @@ async function extractActionItems(transcript: string): Promise<{
     }
 
     // Extract array (handle both direct array and wrapped object)
-    const actionItems: RawActionItem[] = Array.isArray(parsed) 
-      ? parsed 
-      : (parsed.actionItems || []);
+    const actionItems: RawActionItem[] = Array.isArray(parsed) ? parsed : parsed.actionItems || [];
 
     const tokensUsed = {
       input: completion.usage?.prompt_tokens || 0,
@@ -85,7 +84,6 @@ async function extractActionItems(transcript: string): Promise<{
 
     console.log(`✅ Extracted ${actionItems.length} action items`);
     return { actionItems, tokensUsed };
-
   } catch (error: any) {
     console.error('Action items extraction failed:', error.message);
     throw new Error(`Action items extraction failed: ${error.message}`);
@@ -107,7 +105,8 @@ async function extractDecisions(transcript: string): Promise<{
       messages: [
         {
           role: 'system',
-          content: 'You are an expert meeting assistant that extracts key decisions from transcripts. Always return valid JSON.',
+          content:
+            'You are an expert meeting assistant that extracts key decisions from transcripts. Always return valid JSON.',
         },
         {
           role: 'user',
@@ -119,7 +118,7 @@ async function extractDecisions(transcript: string): Promise<{
     });
 
     const content = completion.choices[0].message.content || '[]';
-    
+
     // Parse response
     let parsed;
     try {
@@ -130,9 +129,7 @@ async function extractDecisions(transcript: string): Promise<{
     }
 
     // Extract array
-    const decisions: RawDecision[] = Array.isArray(parsed) 
-      ? parsed 
-      : (parsed.decisions || []);
+    const decisions: RawDecision[] = Array.isArray(parsed) ? parsed : parsed.decisions || [];
 
     const tokensUsed = {
       input: completion.usage?.prompt_tokens || 0,
@@ -141,7 +138,6 @@ async function extractDecisions(transcript: string): Promise<{
 
     console.log(`✅ Extracted ${decisions.length} decisions`);
     return { decisions, tokensUsed };
-
   } catch (error: any) {
     console.error('Decisions extraction failed:', error.message);
     throw new Error(`Decisions extraction failed: ${error.message}`);
@@ -168,7 +164,7 @@ export async function extractFromTranscript(transcript: string): Promise<Extract
   // Calculate total cost
   const totalInputTokens = actionItemsResult.tokensUsed.input + decisionsResult.tokensUsed.input;
   const totalOutputTokens = actionItemsResult.tokensUsed.output + decisionsResult.tokensUsed.output;
-  const cost = (totalInputTokens * GPT4_INPUT_COST) + (totalOutputTokens * GPT4_OUTPUT_COST);
+  const cost = totalInputTokens * GPT4_INPUT_COST + totalOutputTokens * GPT4_OUTPUT_COST;
 
   console.log(`💰 Extraction cost: $${cost.toFixed(4)}`);
   console.log(`📊 Tokens used: ${totalInputTokens} input, ${totalOutputTokens} output`);

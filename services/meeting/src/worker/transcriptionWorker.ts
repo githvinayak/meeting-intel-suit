@@ -1,18 +1,28 @@
 import { Job } from 'bull';
 import { whisperClient } from '../config/openai';
-import {TranscriptionResult } from '../types/transcription';
-import {Meeting} from '../models/Meeting';
+import { TranscriptionResult } from '../types/transcription';
+import { Meeting } from '../models/Meeting';
 import fs from 'fs';
 import { JobOrchestrator } from '../orchestration/jobOrchestrator'; // ← ADD THIS
 import { TranscriptionJobData } from '../types/jobs';
 import { AudioProcessor } from '../processor/audioProcessor';
+import { transcriptionQueue } from '../queue/transcriptionQueue';
 
 export class TranscriptionWorker {
+  static start(): void {
+    const queue = transcriptionQueue.getQueue();
+
+    queue.process(async (job: Job<TranscriptionJobData>) => {
+      return await this.processJob(job);
+    });
+
+    console.log('🔍 Extraction worker started');
+  }
   /**
    * Process a transcription job
    */
   static async processJob(job: Job<TranscriptionJobData>): Promise<TranscriptionResult> {
-    const { meetingId,fileUrl, userId } = job.data;
+    const { meetingId, fileUrl, userId } = job.data;
 
     console.log(`\n🎬 Processing transcription job for meeting: ${meetingId}`);
     console.log(`📁 Audio file: ${fileUrl}`);
@@ -32,10 +42,10 @@ export class TranscriptionWorker {
       console.log(`   Duration: ${metadata.duration.toFixed(0)}s`);
       console.log(`   Size: ${metadata.sizeMB.toFixed(2)}MB`);
       console.log(`   Format: ${metadata.format}`);
-      
+
       const estimatedCost = AudioProcessor.calculateEstimatedCost(metadata.duration);
       console.log(`   Estimated cost: $${estimatedCost.toFixed(4)}`);
-      
+
       await job.progress(40);
 
       // Step 3: Update meeting status to processing
@@ -76,15 +86,17 @@ export class TranscriptionWorker {
 
       // ← ADD THIS: Trigger next steps in pipeline via orchestrator
       console.log(`🔗 Triggering next pipeline steps via orchestrator...`);
-      await JobOrchestrator.onTranscriptionComplete(meetingId, {
-        fullText: result.fullText,
-        segments: result.segments,
-        duration: result.duration,
-        language: result.language,
-      });
-
+      await JobOrchestrator.onTranscriptionComplete(
+        meetingId,
+        {
+          fullText: result.fullText,
+          segments: result.segments,
+          duration: result.duration,
+          language: result.language,
+        },
+        userId
+      );
       return result;
-
     } catch (error: any) {
       console.error(`❌ Transcription failed for meeting ${meetingId}:`, error.message);
 
@@ -102,7 +114,10 @@ export class TranscriptionWorker {
   /**
    * Handle job completion
    */
-  static async onCompleted(job: Job<TranscriptionJobData>, result: TranscriptionResult): Promise<void> {
+  static async onCompleted(
+    job: Job<TranscriptionJobData>,
+    result: TranscriptionResult
+  ): Promise<void> {
     console.log(`✅ Job ${job.id} completed for meeting ${job.data.meetingId}`);
     console.log(`   Duration: ${result.duration}s`);
     console.log(`   Cost: $${result.cost.toFixed(4)}`);
@@ -128,7 +143,7 @@ export class TranscriptionWorker {
     // If all retries exhausted, mark as permanently failed
     if (job.attemptsMade >= (job.opts.attempts || 3)) {
       console.error(`💀 All retries exhausted for meeting ${job.data.meetingId}`);
-      
+
       await Meeting.findByIdAndUpdate(job.data.meetingId, {
         status: 'failed',
         'processing.error': `Failed after ${job.attemptsMade} attempts: ${error.message}`,
@@ -149,7 +164,7 @@ export class TranscriptionWorker {
    */
   static async onStalled(job: Job<TranscriptionJobData>): Promise<void> {
     console.warn(`⚠️  Job ${job.id} stalled for meeting ${job.data.meetingId}`);
-    
+
     // Update meeting status
     await Meeting.findByIdAndUpdate(job.data.meetingId, {
       status: 'pending',
