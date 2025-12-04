@@ -55,36 +55,37 @@ export class UploadService {
 
     return uploadResult.secure_url;
   }
-  async downloadFileToTemp(audioPath: string, meetingId: string): Promise<string> {
-    // Create temp directory if doesn't exist
+  async downloadFileToTemp(fileUrl: string, meetingId: string): Promise<string> {
     const tempDir = path.join(__dirname, '../../temp/audio');
+
+    // Create temp directory if doesn't exist
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
     }
 
     // Determine file extension from URL
-    const urlPath = new URL(audioPath).pathname;
+    const urlPath = new URL(fileUrl).pathname;
     const ext = path.extname(urlPath) || '.mp3';
-    const fileUrl = path.join(tempDir, `${meetingId}${ext}`);
+    const audioPath = path.join(tempDir, `${meetingId}${ext}`);
 
     console.log(`📥 Downloading audio file from Cloudinary...`);
-    console.log(`   Source: ${audioPath}`);
-    console.log(`   Destination: ${fileUrl}`);
+    console.log(`   Source: ${fileUrl}`);
+    console.log(`   Destination: ${audioPath}`);
 
     // Download file
     const response = await axios({
       method: 'get',
-      url: audioPath,
+      url: fileUrl,
       responseType: 'stream',
     });
 
-    const writer = fs.createWriteStream(fileUrl);
+    const writer = fs.createWriteStream(audioPath);
     response.data.pipe(writer);
 
     return new Promise((resolve, reject) => {
       writer.on('finish', () => {
         console.log(`✅ Audio file downloaded successfully`);
-        resolve(fileUrl);
+        resolve(audioPath);
       });
       writer.on('error', (error) => {
         console.error(`❌ Failed to download audio file:`, error);
@@ -92,7 +93,6 @@ export class UploadService {
       });
     });
   }
-
   async uploadFileToCloud(params: UploadFileParams): Promise<UploadResult> {
     const { file, title, userId } = params;
 
@@ -121,7 +121,7 @@ export class UploadService {
       const fileUrl = await this.downloadFileToTemp(audioPath, meeting._id.toString());
 
       // Start the AI pipeline via orchestrator
-      await JobOrchestrator.startPipeline(meeting._id.toString(), fileUrl, userId || '');
+      await JobOrchestrator.startPipeline(meeting._id.toString(), fileUrl, file.size, userId || '');
 
       console.log(`✅ Upload flow complete!\n`);
     } catch (error: any) {
@@ -144,61 +144,55 @@ export class UploadService {
     const { file, meetingId, userId } = params;
 
     console.log(`\n📎 Starting file attachment flow...`);
-    console.log(`   Meeting ID: ${meetingId}`);
 
-    // Validate MongoDB ObjectId format
+    // Validate meeting exists
     if (!mongoose.Types.ObjectId.isValid(meetingId)) {
       throw new Error('Invalid meeting ID format');
     }
 
-    // Find existing meeting
     const meeting = await Meeting.findById(meetingId);
 
     if (!meeting) {
       throw new Error('Meeting not found');
     }
 
-    // Check ownership (if userId provided)
     if (userId && meeting.createdBy && meeting.createdBy.toString() !== userId) {
       throw new Error('Unauthorized: You do not own this meeting');
     }
 
-    // Check if meeting already has a file
     if (meeting.fileUrl) {
-      throw new Error('Meeting already has a file attached. Delete the existing file first.');
+      throw new Error('Meeting already has a file attached');
     }
 
-    // Step 1: Upload to Cloudinary
-    console.log(`☁️  Step 1/3: Uploading to Cloudinary...`);
-    const audioPath = await this.uploadToCloudinary(file);
-    console.log(`✅ File uploaded: ${audioPath}`);
+    // Upload to Cloudinary
+    console.log(`☁️  Step 1/2: Uploading to Cloudinary...`);
+    const fileUrl = await this.uploadToCloudinary(file);
+    console.log(`✅ File uploaded: ${fileUrl}`);
 
-    // Step 2: Update meeting record
-    console.log(`💾 Step 2/3: Updating meeting record...`);
-    meeting.fileUrl = audioPath;
-    meeting.status = 'pending'; // Ready for transcription
+    // Update meeting
+    console.log(`💾 Step 2/2: Updating meeting record...`);
+    meeting.fileUrl = fileUrl;
+    meeting.status = 'pending';
     await meeting.save();
-    console.log(`✅ Meeting updated: ${meeting._id}`);
 
-    // Step 3: Download file and start AI pipeline
-    console.log(`🤖 Step 3/3: Starting AI processing pipeline...`);
+    // Start AI pipeline
+    console.log(`🤖 Starting AI processing pipeline...`);
     try {
-      const fileUrl = await this.downloadFileToTemp(audioPath, meeting._id.toString());
-
-      // Start the AI pipeline via orchestrator
-      await JobOrchestrator.startPipeline(meeting._id.toString(), fileUrl, userId || '');
+      await JobOrchestrator.startPipeline(
+        meeting._id.toString(),
+        fileUrl, // ← Pass Cloudinary URL
+        file.size, // ← Pass file size
+        userId || ''
+      );
 
       console.log(`✅ Attachment flow complete!\n`);
     } catch (error: any) {
       console.error(`❌ Failed to start AI pipeline:`, error.message);
-      // Don't fail the attachment - file is already saved
-      // Pipeline will retry automatically via Bull
     }
 
-    // Return structured result
     return {
       meetingId: meeting._id.toString(),
-      fileUrl: audioPath,
+      fileUrl: fileUrl,
       fileName: file.originalname,
       fileSize: file.size,
       status: meeting.status,

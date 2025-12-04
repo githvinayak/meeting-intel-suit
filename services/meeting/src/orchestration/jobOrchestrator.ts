@@ -15,27 +15,30 @@ export class JobOrchestrator {
    * Start the full AI processing pipeline for a meeting
    * Called when file is uploaded
    */
-  static async startPipeline(meetingId: string, fileUrl: string, userId: string): Promise<void> {
+  static async startPipeline(
+    meetingId: string,
+    fileUrl: string, // ← Cloudinary URL
+    fileSize: number, // ← File size in bytes
+    userId: string
+  ): Promise<void> {
     console.log(`\n🎬 Starting AI pipeline for meeting: ${meetingId}`);
-    console.log(`📁 Audio file: ${fileUrl}`);
+    console.log(`📁 File URL: ${fileUrl}`);
 
     try {
-      // Step 1: Queue transcription (Day 11)
+      // Queue transcription job with fileUrl
       const transcriptionJob = await transcriptionQueue.addJob({
         meetingId,
-        audioPath,
+        fileUrl, // ← Cloudinary URL
+        fileSize, // ← File size
         userId,
+        createdAt: new Date(),
       });
 
       console.log(`✅ Pipeline Step 1/4: Transcription queued (Job: ${transcriptionJob.id})`);
       console.log(`📊 Remaining steps will be triggered automatically after transcription\n`);
-
-      // Steps 2-4 will be triggered by onTranscriptionComplete()
-      // when transcription finishes
     } catch (error: any) {
       console.error(`❌ Failed to start pipeline for meeting ${meetingId}:`, error.message);
 
-      // Update meeting status to failed
       await Meeting.findByIdAndUpdate(meetingId, {
         status: 'failed',
         'processing.error': `Pipeline start failed: ${error.message}`,

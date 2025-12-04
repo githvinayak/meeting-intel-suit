@@ -18,7 +18,7 @@ export interface TranscriptionResult {
 
 export interface TranscriptionJob {
   meetingId: string;
-  audioPath: string;
+  fileUrl: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   result?: TranscriptionResult;
   error?: string;
