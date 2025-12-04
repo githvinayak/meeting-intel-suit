@@ -27,7 +27,7 @@ class TranscriptionQueue {
 
     // Register event handlers
     this.setupEventHandlers();
-    
+
     console.log('✅ Transcription queue initialized');
   }
 
@@ -79,7 +79,7 @@ class TranscriptionQueue {
    */
   async addJob(data: TranscriptionJobData): Promise<Job<TranscriptionJobData>> {
     console.log(`➕ Adding transcription job to queue: ${data.meetingId}`);
-    
+
     const job = await this.queue.add(data, {
       jobId: `transcription-${data.meetingId}`, // Unique job ID
       priority: 1, // Higher priority = processed first
@@ -94,7 +94,7 @@ class TranscriptionQueue {
    */
   async getJobStatus(jobId: string): Promise<any> {
     const job = await this.queue.getJob(jobId);
-    
+
     if (!job) {
       return null;
     }
@@ -138,15 +138,15 @@ class TranscriptionQueue {
   /**
    * Clean old jobs
    */
-  async cleanOldJobs(daysOld: number = 7): Promise<void> {
-    const gracePeriod = daysOld * 24 * 60 * 60 * 1000; // Convert to ms
-    
-    await this.queue.clean(gracePeriod, 'completed');
-    await this.queue.clean(gracePeriod, 'failed');
-    
-    console.log(`🧹 Cleaned jobs older than ${daysOld} days`);
+  async cleanup(): Promise<void> {
+    await this.queue.clean(24 * 60 * 60 * 1000); // Clean jobs older than 24 hours
+    console.log('🧹 Extraction queue cleaned');
   }
 
+  async close(): Promise<void> {
+    await this.queue.close();
+    console.log('👋 Extraction queue closed');
+  }
   /**
    * Get the queue instance
    */
