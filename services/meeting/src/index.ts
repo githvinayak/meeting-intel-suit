@@ -8,6 +8,7 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger/swagger';
 import { connectDatabase } from './config/db';
 import { config } from './config/config';
+import WorkerManager from './worker';
 
 const app: Application = express();
 const PORT = config.server.port || 3002;
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 connectDatabase();
+WorkerManager.start();
 // Swagger documentation
 app.use(
   '/api/docs',
