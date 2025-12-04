@@ -5,24 +5,37 @@ export interface IActionItem {
   id: string;
   description: string;
   assignedTo?: string;
+  priority: 'high' | 'medium' | 'low'; // ← ADD THIS
   dueDate?: Date;
-  status: 'pending' | 'completed';
+  status: 'pending' | 'in-progress' | 'completed'; // ← UPDATED (added 'in-progress')
+  extractedAt?: Date; // ← ADD THIS
 }
 
+// 2. UPDATE IDecision interface (line ~12)
 export interface IDecision {
   id: string;
   description: string;
   madeBy?: string;
+  impact: 'high' | 'medium' | 'low'; // ← ADD THIS
+  context?: string; // ← ADD THIS
   timestamp: Date;
+  extractedAt?: Date; // ← ADD THIS
 }
 
+// 3. UPDATE IParticipant interface (line ~18)
 export interface IParticipant {
   userId?: string;
   name: string;
   email?: string;
   role?: string;
+  // ← ADD THESE SENTIMENT FIELDS:
+  sentimentScore?: number; // -1 to 1
+  engagementLevel?: number; // 0-1
+  speakingTime?: number; // minutes
+  concerns?: string[]; // ["low engagement", "high stress"]
 }
 
+// 4. UPDATE ISentimentAnalysis interface (line ~24)
 export interface ISentimentAnalysis {
   overall: 'positive' | 'neutral' | 'negative';
   score: number; // -1 to 1
@@ -37,6 +50,7 @@ export interface ISentimentAnalysis {
     factors: string[];
     recommendations: string[];
   };
+  analyzedAt?: Date; // ← ADD THIS
 }
 
 // ← ADD THIS: Transcript segment interface
@@ -160,12 +174,19 @@ const MeetingSchema = new Schema<IMeeting>(
         id: { type: String, required: true },
         description: { type: String, required: true },
         assignedTo: String,
+        priority: {
+          // ← ADD THIS
+          type: String,
+          enum: ['high', 'medium', 'low'],
+          default: 'medium',
+        },
         dueDate: Date,
         status: {
           type: String,
-          enum: ['pending', 'completed'],
+          enum: ['pending', 'in-progress', 'completed'], // ← UPDATED
           default: 'pending',
         },
+        extractedAt: Date, // ← ADD THIS
       },
     ],
 
@@ -174,7 +195,15 @@ const MeetingSchema = new Schema<IMeeting>(
         id: { type: String, required: true },
         description: { type: String, required: true },
         madeBy: String,
+        impact: {
+          // ← ADD THIS
+          type: String,
+          enum: ['high', 'medium', 'low'],
+          default: 'medium',
+        },
+        context: String, // ← ADD THIS
         timestamp: { type: Date, default: Date.now },
+        extractedAt: Date, // ← ADD THIS
       },
     ],
 
@@ -184,6 +213,19 @@ const MeetingSchema = new Schema<IMeeting>(
         name: { type: String, required: true },
         email: String,
         role: String,
+        // ← ADD THESE SENTIMENT FIELDS:
+        sentimentScore: {
+          type: Number,
+          min: -1,
+          max: 1,
+        },
+        engagementLevel: {
+          type: Number,
+          min: 0,
+          max: 1,
+        },
+        speakingTime: Number,
+        concerns: [String],
       },
     ],
 
@@ -214,16 +256,17 @@ const MeetingSchema = new Schema<IMeeting>(
         max: 1,
       },
       emotions: {
-        joy: Number,
-        frustration: Number,
-        stress: Number,
-        engagement: Number,
+        joy: { type: Number, min: 0, max: 1 }, // ← ADD min/max
+        frustration: { type: Number, min: 0, max: 1 }, // ← ADD min/max
+        stress: { type: Number, min: 0, max: 1 }, // ← ADD min/max
+        engagement: { type: Number, min: 0, max: 1 }, // ← ADD min/max
       },
       burnoutIndicators: {
-        score: Number,
+        score: { type: Number, min: 0, max: 100 }, // ← ADD min/max
         factors: [String],
         recommendations: [String],
       },
+      analyzedAt: Date, // ← ADD THIS
     },
 
     relatedMeetings: [
