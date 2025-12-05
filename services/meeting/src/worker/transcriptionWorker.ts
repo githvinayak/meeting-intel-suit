@@ -1,12 +1,11 @@
 import { Job } from 'bull';
-import { whisperClient } from '../config/openai';
 import { TranscriptionResult } from '../types/transcription';
 import { Meeting } from '../models/Meeting';
-import fs from 'fs';
 import { JobOrchestrator } from '../orchestration/jobOrchestrator'; // ← ADD THIS
 import { TranscriptionJobData } from '../types/jobs';
 import { AudioProcessor } from '../processor/audioProcessor';
 import { transcriptionQueue } from '../queue/transcriptionQueue';
+import { TranscriptionService } from '../services/transcriptionService';
 
 export class TranscriptionWorker {
   static start(): void {
@@ -58,7 +57,7 @@ export class TranscriptionWorker {
 
       // Step 4: Transcribe audio
       console.log('🤖 Step 4/4: Transcribing audio...');
-      const result = await whisperClient.transcribe(fileUrl, meetingId);
+      const result = await TranscriptionService.transcribe(fileUrl, meetingId);
       await job.progress(90);
 
       // Step 5: Save transcription to database

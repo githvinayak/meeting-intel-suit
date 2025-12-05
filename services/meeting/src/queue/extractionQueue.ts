@@ -28,11 +28,9 @@ class ExtractionQueue {
         removeOnFail: 200, // Keep last 200 failed jobs
       },
     });
-
-    this.setupEventHandlers();
   }
 
-  private setupEventHandlers(): void {
+  StartWorker(): void {
     this.queue.on('completed', (job, result) => {
       console.log(`✅ Extraction job ${job.id} completed for meeting ${job.data.meetingId}`);
     });
@@ -68,14 +66,6 @@ class ExtractionQueue {
       throw error;
     }
   }
-
-  /**
-   * Get queue instance for worker
-   */
-  getQueue(): Queue.Queue<ExtractionJobData> {
-    return this.queue;
-  }
-
   async getJobStatus(jobId: string): Promise<any> {
     const job = await this.queue.getJob(jobId);
 
@@ -119,6 +109,9 @@ class ExtractionQueue {
     };
   }
 
+  getQueue(): Queue.Queue<ExtractionJobData> {
+    return this.queue;
+  }
   /**
    * Clean up old jobs
    */

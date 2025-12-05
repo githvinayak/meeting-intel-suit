@@ -24,54 +24,41 @@ class TranscriptionQueue {
         removeOnFail: 200, // Keep last 200 failed jobs
       },
     });
-
-    // Register event handlers
-    this.setupEventHandlers();
-
-    console.log('✅ Transcription queue initialized');
   }
 
   /**
    * Setup event handlers for the queue
    */
-  private setupEventHandlers(): void {
-    // Process jobs
-    this.queue.process(
-      config.limits.maxConcurrent, // Process max N jobs concurrently
-      async (job: Job<TranscriptionJobData>) => {
-        return TranscriptionWorker.processJob(job);
-      }
-    );
+  StartWorker(): void {
+    console.log('🔧 Starting Transcription worker...');
 
-    // Job completed
+    // Process jobs
+    this.queue.process(config.limits.maxConcurrent || 2, async (job: Job<TranscriptionJobData>) => {
+      return TranscriptionWorker.processJob(job);
+    });
+
+    // Register event handlers
     this.queue.on('completed', (job: Job<TranscriptionJobData>, result) => {
       TranscriptionWorker.onCompleted(job, result);
     });
 
-    // Job failed
     this.queue.on('failed', (job: Job<TranscriptionJobData>, error: Error) => {
       TranscriptionWorker.onFailed(job, error);
     });
 
-    // Job progress
     this.queue.on('progress', (job: Job<TranscriptionJobData>, progress: number) => {
       TranscriptionWorker.onProgress(job, progress);
     });
 
-    // Job stalled
     this.queue.on('stalled', (job: Job<TranscriptionJobData>) => {
       TranscriptionWorker.onStalled(job);
     });
 
-    // Queue ready
-    this.queue.on('ready', () => {
-      console.log('🎬 Transcription queue is ready to process jobs');
+    this.queue.on('error', (error: Error) => {
+      console.error('❌ Transcription queue error:', error);
     });
 
-    // Queue error
-    this.queue.on('error', (error: Error) => {
-      console.error('❌ Queue error:', error);
-    });
+    console.log('✅ Transcription worker started');
   }
 
   /**
@@ -135,6 +122,9 @@ class TranscriptionQueue {
     };
   }
 
+  getQueue(): Queue<TranscriptionJobData> {
+    return this.queue;
+  }
   /**
    * Clean old jobs
    */
@@ -146,12 +136,6 @@ class TranscriptionQueue {
   async close(): Promise<void> {
     await this.queue.close();
     console.log('👋 Extraction queue closed');
-  }
-  /**
-   * Get the queue instance
-   */
-  getQueue(): Queue<TranscriptionJobData> {
-    return this.queue;
   }
 }
 

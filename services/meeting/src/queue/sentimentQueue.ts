@@ -29,11 +29,9 @@ class SentimentQueue {
         removeOnFail: 200,
       },
     });
-
-    this.setupEventHandlers();
   }
 
-  private setupEventHandlers(): void {
+  StartWorker(): void {
     this.queue.on('completed', (job, result) => {
       console.log(`✅ Sentiment job ${job.id} completed for meeting ${job.data.meetingId}`);
     });
@@ -68,13 +66,6 @@ class SentimentQueue {
       console.error('Failed to add sentiment job:', error);
       throw error;
     }
-  }
-
-  /**
-   * Get queue instance for worker
-   */
-  getQueue(): Queue.Queue<SentimentJobData> {
-    return this.queue;
   }
 
   async getJobStatus(jobId: string): Promise<any> {
@@ -120,6 +111,9 @@ class SentimentQueue {
     };
   }
 
+  getQueue(): Queue.Queue<SentimentJobData> {
+    return this.queue;
+  }
   /**
    * Clean up old jobs
    */

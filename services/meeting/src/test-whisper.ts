@@ -1,13 +1,14 @@
-import { whisperClient } from './config/openai';
+import { USE_MOCK_MODE } from './config/openai';
+import { TranscriptionService } from './services/transcriptionService';
 async function testWhisper() {
   console.log('🧪 Testing Whisper Client...\n');
 
   // Test 1: Check mode
-  console.log('Mode:', whisperClient.isMockMode() ? 'MOCK (Free)' : 'REAL (Paid)');
+  console.log('Mode:', USE_MOCK_MODE ? 'MOCK (Free)' : 'REAL (Paid)');
 
   // Test 2: Mock transcription
   try {
-    const result = await whisperClient.transcribe(
+    const result = await TranscriptionService.transcribe(
       '/fake/path/audio.mp3', // Doesn't matter in mock mode
       'test-meeting-123'
     );
@@ -21,7 +22,7 @@ async function testWhisper() {
 
     // Test 3: Cost summary
     console.log('\n💰 Cost Summary:');
-    const summary = whisperClient.getCostSummary();
+    const summary = TranscriptionService.getCostSummary();
     console.log('Total spent:', `$${summary.totalCost.toFixed(4)}`);
     console.log('Remaining credits:', `$${summary.remainingCredits.toFixed(2)}`);
     console.log('Transcriptions:', summary.transcriptionCount);
