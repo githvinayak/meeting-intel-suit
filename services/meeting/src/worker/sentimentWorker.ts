@@ -1,22 +1,9 @@
 import { Job } from 'bull';
 import { analyzeSentiment, getBurnoutRiskLevel } from '../services/sentimentService';
 import { Meeting } from '../models/Meeting';
-import { SentimentJobData, sentimentQueue } from '../queue/sentimentQueue';
+import { SentimentJobData } from '../queue/sentimentQueue';
 
 class SentimentWorker {
-  /**
-   * Start processing sentiment jobs
-   */
-  static start(): void {
-    const queue = sentimentQueue.getQueue();
-
-    queue.process(async (job: Job<SentimentJobData>) => {
-      return await this.processJob(job);
-    });
-
-    console.log('🎭 Sentiment worker started');
-  }
-
   /**
    * Process a single sentiment analysis job
    */
@@ -176,3 +163,6 @@ class SentimentWorker {
 }
 
 export default SentimentWorker;
+
+
+

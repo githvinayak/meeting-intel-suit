@@ -2,22 +2,9 @@ import { Job } from 'bull';
 import { extractFromTranscript } from '../services/extractionService';
 import { Meeting } from '../models/Meeting';
 import { v4 as uuidv4 } from 'uuid';
-import { ExtractionJobData, extractionQueue } from '../queue/extractionQueue';
+import { ExtractionJobData } from '../queue/extractionQueue';
 
 class ExtractionWorker {
-  /**
-   * Start processing extraction jobs
-   */
-  static start(): void {
-    const queue = extractionQueue.getQueue();
-
-    queue.process(async (job: Job<ExtractionJobData>) => {
-      return await this.processJob(job);
-    });
-
-    console.log('🔍 Extraction worker started');
-  }
-
   /**
    * Process a single extraction job
    */

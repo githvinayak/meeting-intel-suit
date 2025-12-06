@@ -5,7 +5,7 @@ import { config } from '../config/config';
 export interface ExtractionJobData {
   meetingId: string;
   transcript: string;
-  userId: string;
+  userId?: string;
 }
 
 class ExtractionQueue {

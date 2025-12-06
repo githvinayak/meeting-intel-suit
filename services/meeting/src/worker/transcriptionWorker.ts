@@ -4,22 +4,9 @@ import { Meeting } from '../models/Meeting';
 import { JobOrchestrator } from '../orchestration/jobOrchestrator'; // ← ADD THIS
 import { TranscriptionJobData } from '../types/jobs';
 import { AudioProcessor } from '../processor/audioProcessor';
-import { transcriptionQueue } from '../queue/transcriptionQueue';
 import { TranscriptionService } from '../services/transcriptionService';
 
 export class TranscriptionWorker {
-  static start(): void {
-    const queue = transcriptionQueue.getQueue();
-
-    queue.process(async (job: Job<TranscriptionJobData>) => {
-      return await this.processJob(job);
-    });
-
-    console.log('🔍 Extraction worker started');
-  }
-  /**
-   * Process a transcription job
-   */
   static async processJob(job: Job<TranscriptionJobData>): Promise<TranscriptionResult> {
     const { meetingId, fileUrl, userId } = job.data;
 

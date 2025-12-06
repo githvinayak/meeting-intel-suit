@@ -6,7 +6,7 @@ export interface SentimentJobData {
   meetingId: string;
   transcript: string;
   participants: string[]; // List of participant names
-  userId: string;
+  userId?: string;
 }
 
 class SentimentQueue {

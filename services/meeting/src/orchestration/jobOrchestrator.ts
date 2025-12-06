@@ -92,8 +92,8 @@ export class JobOrchestrator {
         }),
       ]);
 
-      console.log(`✅ Pipeline Step 2/4: Extraction queued (Job: ${extractionJob.id})`);
-      console.log(`✅ Pipeline Step 3/4: Sentiment queued (Job: ${sentimentJob.id})`);
+      console.log(`✅ Pipeline Step 2/4: Extraction queued (Job: ${extractionJob})`);
+      console.log(`✅ Pipeline Step 3/4: Sentiment queued (Job: ${sentimentJob})`);
 
       // TODO (Day 13): Uncomment when timeline queue is ready
       /*
@@ -121,95 +121,95 @@ export class JobOrchestrator {
    * Get overall pipeline status for a meeting
    * Used by status endpoint
    */
-  // static async getPipelineStatus(meetingId: string): Promise<any> {
-  //   try {
-  //     // Get job statuses from all queues for THIS specific meeting
-  //     const [transcriptionStatus, extractionStatus, sentimentStatus] = await Promise.all([
-  //       transcriptionQueue.getJobStatus(`transcription-${meetingId}`),
-  //       extractionQueue.getJobStatus(`extraction-${meetingId}`),
-  //       sentimentQueue.getJobStatus(`sentiment-${meetingId}`),
-  //     ]);
+  static async getPipelineStatus(meetingId: string): Promise<any> {
+    try {
+      // Get job statuses from all queues for THIS specific meeting
+      const [transcriptionStatus, extractionStatus, sentimentStatus] = await Promise.all([
+        transcriptionQueue.getJobStatus(`transcription-${meetingId}`),
+        extractionQueue.getJobStatus(`extraction-${meetingId}`),
+        sentimentQueue.getJobStatus(`sentiment-${meetingId}`),
+      ]);
 
-  //     // TODO (Day 13): Add timeline status
-  //     // const timelineStatus = await timelineQueue.getJobStatus(`timeline-${meetingId}`);
+      // TODO (Day 13): Add timeline status
+      // const timelineStatus = await timelineQueue.getJobStatus(`timeline-${meetingId}`);
 
-  //     return {
-  //       transcription: transcriptionStatus || { state: 'unknown', progress: 0 },
-  //       extraction: extractionStatus || { state: 'pending', progress: 0 },
-  //       sentiment: sentimentStatus || { state: 'pending', progress: 0 },
-  //       // timeline: timelineStatus || { state: 'pending', progress: 0 },
-  //     };
-  //   } catch (error: any) {
-  //     console.error(`❌ Failed to get pipeline status for ${meetingId}:`, error.message);
-  //     return {
-  //       transcription: { state: 'unknown', progress: 0 },
-  //       extraction: { state: 'unknown', progress: 0 },
-  //       sentiment: { state: 'unknown', progress: 0 },
-  //       error: error.message,
-  //     };
-  //   }
-  // }
+      return {
+        transcription: transcriptionStatus || { state: 'unknown', progress: 0 },
+        extraction: extractionStatus || { state: 'pending', progress: 0 },
+        sentiment: sentimentStatus || { state: 'pending', progress: 0 },
+        // timeline: timelineStatus || { state: 'pending', progress: 0 },
+      };
+    } catch (error: any) {
+      console.error(`❌ Failed to get pipeline status for ${meetingId}:`, error.message);
+      return {
+        transcription: { state: 'unknown', progress: 0 },
+        extraction: { state: 'unknown', progress: 0 },
+        sentiment: { state: 'unknown', progress: 0 },
+        error: error.message,
+      };
+    }
+  }
 
-  // static async getQueueStats(): Promise<any> {
-  //   try {
-  //     const [transcriptionStats, extractionStats, sentimentStats] = await Promise.all([
-  //       transcriptionQueue.getStats(),
-  //       extractionQueue.getStats(),
-  //       sentimentQueue.getStats(),
-  //     ]);
+  static async getQueueStats(): Promise<any> {
+    try {
+      const [transcriptionStats, extractionStats, sentimentStats] = await Promise.all([
+        transcriptionQueue.getStats(),
+        extractionQueue.getStats(),
+        sentimentQueue.getStats(),
+      ]);
 
-  //     return {
-  //       transcription: transcriptionStats,
-  //       extraction: extractionStats,
-  //       sentiment: sentimentStats,
-  //       totalJobs: transcriptionStats.total + extractionStats.total + sentimentStats.total,
-  //     };
-  //   } catch (error: any) {
-  //     console.error('Failed to get queue stats:', error.message);
-  //     throw error;
-  //   }
-  // }
+      return {
+        transcription: transcriptionStats,
+        extraction: extractionStats,
+        sentiment: sentimentStats,
+        totalJobs: transcriptionStats.total + extractionStats.total + sentimentStats.total,
+      };
+    } catch (error: any) {
+      console.error('Failed to get queue stats:', error.message);
+      throw error;
+    }
+  }
   /**
    * Cancel all pipeline jobs for a meeting
    * Useful if user cancels processing
    */
-  // static async cancelPipeline(meetingId: string): Promise<void> {
-  //   console.log(`🛑 Cancelling pipeline for meeting: ${meetingId}`);
+  static async cancelPipeline(meetingId: string): Promise<void> {
+    console.log(`🛑 Cancelling pipeline for meeting: ${meetingId}`);
 
-  //   try {
-  //     // Cancel all jobs
-  //     const transcriptionJob = await transcriptionQueue
-  //       .getQueue()
-  //       .getJob(`transcription-${meetingId}`);
-  //     if (transcriptionJob) {
-  //       await transcriptionJob.remove();
-  //       console.log(`✅ Transcription job cancelled`);
-  //     }
+    try {
+      // Cancel all jobs
+      const transcriptionJob = await transcriptionQueue
+        .getQueue()
+        .getJob(`transcription-${meetingId}`);
+      if (transcriptionJob) {
+        await transcriptionJob.remove();
+        console.log(`✅ Transcription job cancelled`);
+      }
 
-  //     // ✅ DAY 12: Cancel extraction and sentiment jobs
-  //     const extractionJob = await extractionQueue.getQueue().getJob(`extraction-${meetingId}`);
-  //     if (extractionJob) {
-  //       await extractionJob.remove();
-  //       console.log(`✅ Extraction job cancelled`);
-  //     }
+      // ✅ DAY 12: Cancel extraction and sentiment jobs
+      const extractionJob = await extractionQueue.getQueue().getJob(`extraction-${meetingId}`);
+      if (extractionJob) {
+        await extractionJob.remove();
+        console.log(`✅ Extraction job cancelled`);
+      }
 
-  //     const sentimentJob = await sentimentQueue.getQueue().getJob(`sentiment-${meetingId}`);
-  //     if (sentimentJob) {
-  //       await sentimentJob.remove();
-  //       console.log(`✅ Sentiment job cancelled`);
-  //     }
+      const sentimentJob = await sentimentQueue.getQueue().getJob(`sentiment-${meetingId}`);
+      if (sentimentJob) {
+        await sentimentJob.remove();
+        console.log(`✅ Sentiment job cancelled`);
+      }
 
-  //     // Update meeting status
-  //     await Meeting.findByIdAndUpdate(meetingId, {
-  //       status: 'cancelled',
-  //       'processing.completedAt': new Date(),
-  //       'processing.error': 'Pipeline cancelled by user',
-  //     });
+      // Update meeting status
+      await Meeting.findByIdAndUpdate(meetingId, {
+        status: 'cancelled',
+        'processing.completedAt': new Date(),
+        'processing.error': 'Pipeline cancelled by user',
+      });
 
-  //     console.log(`✅ Pipeline cancelled for meeting: ${meetingId}`);
-  //   } catch (error: any) {
-  //     console.error(`❌ Failed to cancel pipeline for ${meetingId}:`, error.message);
-  //     throw error;
-  //   }
-  // }
+      console.log(`✅ Pipeline cancelled for meeting: ${meetingId}`);
+    } catch (error: any) {
+      console.error(`❌ Failed to cancel pipeline for ${meetingId}:`, error.message);
+      throw error;
+    }
+  }
 }
