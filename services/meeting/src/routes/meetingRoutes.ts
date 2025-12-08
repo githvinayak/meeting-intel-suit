@@ -3,9 +3,9 @@ import { authenticate } from '../middleware/authenticate';
 import {
   createMeeting,
   getMeetingById,
-  getMeetingStatus,
   listMeetings,
 } from '../controllers/meetingController';
+import { getMeetingStatus } from '../controllers/jobController';
 
 const router: Router = express.Router();
 
