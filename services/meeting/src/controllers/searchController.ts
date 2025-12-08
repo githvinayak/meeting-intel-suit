@@ -1,13 +1,10 @@
 import { Request, Response } from 'express';
-import { searchMeetings, getMeetingStats, getRecentMeetings } from '../services/searchService';
-import {
-  exportToPDF,
-  exportToMarkdown,
-  exportActionItemsToCSV,
-  exportMeetingsToCSV,
-} from '../services/exportService';
 import { Meeting } from '../models/Meeting';
+import { ExportService } from '../services/exportService';
+import { SearchService } from '../services/searchService';
 
+const searchService = new SearchService();
+const exportService = new ExportService();
 /**
  * Search meetings with filters
  * GET /api/v1/meetings/search
@@ -44,7 +41,7 @@ export const searchMeetingsController = async (req: Request, res: Response) => {
       sortOrder: (sortOrder as 'asc' | 'desc') || 'desc',
     };
 
-    const result = await searchMeetings(filters);
+    const result = await searchService.searchMeetings(filters);
 
     res.json({
       success: true,
@@ -66,7 +63,7 @@ export const searchMeetingsController = async (req: Request, res: Response) => {
 export const getMeetingStatsController = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.userId;
-    const stats = await getMeetingStats(userId);
+    const stats = await searchService.getMeetingStats(userId);
 
     res.json({
       success: true,
@@ -90,7 +87,7 @@ export const getRecentMeetingsController = async (req: Request, res: Response) =
     const userId = (req as any).user?.userId;
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
 
-    const meetings = await getRecentMeetings(userId, limit);
+    const meetings = await searchService.getRecentMeetings(userId, limit);
 
     res.json({
       success: true,
@@ -122,7 +119,7 @@ export const exportMeetingToPDF = async (req: Request, res: Response) => {
       });
     }
 
-    const pdfBuffer = await exportToPDF(meeting);
+    const pdfBuffer = await exportService.exportToPDF(meeting);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${meeting.title}.pdf"`);
@@ -153,7 +150,7 @@ export const exportMeetingToMarkdown = async (req: Request, res: Response) => {
       });
     }
 
-    const markdown = exportToMarkdown(meeting);
+    const markdown = exportService.exportToMarkdown(meeting);
 
     res.setHeader('Content-Type', 'text/markdown');
     res.setHeader('Content-Disposition', `attachment; filename="${meeting.title}.md"`);
@@ -184,7 +181,7 @@ export const exportMeetingActionItemsToCSV = async (req: Request, res: Response)
       });
     }
 
-    const csv = exportActionItemsToCSV(meeting);
+    const csv = exportService.exportActionItemsToCSV(meeting);
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader(
@@ -222,7 +219,7 @@ export const exportMeetingsToCSVController = async (req: Request, res: Response)
       createdBy: userId,
     });
 
-    const csv = exportMeetingsToCSV(meetings);
+    const csv = exportService.exportMeetingsToCSV(meetings);
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="meetings.csv"');

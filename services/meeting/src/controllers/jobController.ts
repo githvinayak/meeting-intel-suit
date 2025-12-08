@@ -75,17 +75,21 @@ export const getQueueStats = async (req: Request, res: Response): Promise<void> 
   try {
     // Import transcriptionQueue dynamically to avoid circular deps
     const { transcriptionQueue } = await import('../queue/transcriptionQueue');
+    const { extractionQueue } = await import('../queue/extractionQueue');
+    const { sentimentQueue } = await import('../queue/sentimentQueue');
 
     // Get queue stats
-    const stats = await transcriptionQueue.getStats();
+    const transcriptionStats = await transcriptionQueue.getStats();
+    const extractionStats = await extractionQueue.getStats();
+    const sentimentStats = await sentimentQueue.getStats();
 
     res.status(200).json({
       success: true,
       data: {
-        transcription: stats,
+        transcription: transcriptionStats,
         // TODO (Day 12+): Add other queue stats
-        // extraction: await extractionQueue.getStats(),
-        // sentiment: await sentimentQueue.getStats(),
+        extraction: extractionStats,
+        sentiment: sentimentStats,
         // timeline: await timelineQueue.getStats(),
       },
     });

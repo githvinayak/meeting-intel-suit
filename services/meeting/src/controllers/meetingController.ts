@@ -150,30 +150,3 @@ export const listMeetings = async (req: AuthenticatedRequest, res: Response) => 
   }
 };
 
-export const getMeetingStatus = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { id } = getMeetingParamsSchema.parse(req.params);
-    const userId = req.user?.userId;
-
-    if (!userId) {
-      res.status(401).json({
-        success: false,
-        message: 'User not authenticated',
-      });
-      return;
-    }
-    const status = await meetingService.getMeetingStatus({ meetingId: id });
-
-    res.status(200).json({
-      success: true,
-      data: status,
-    });
-  } catch (error: any) {
-    console.error('Get meeting status error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get meeting status',
-      error: error.message,
-    });
-  }
-};
