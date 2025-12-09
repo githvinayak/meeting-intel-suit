@@ -1,5 +1,6 @@
 import { Meeting } from '../models/Meeting';
 import { extractionQueue } from '../queue/extractionQueue';
+import { followUpDetectionQueue } from '../queue/folloUpDetecttionQueue';
 import { sentimentQueue } from '../queue/sentimentQueue';
 import { transcriptionQueue } from '../queue/transcriptionQueue';
 
@@ -90,6 +91,11 @@ export class JobOrchestrator {
           participants: participantNames,
           userId,
         }),
+        followUpDetectionQueue.addJob({
+          meetingId,
+          transcript: transcriptData.fullText,
+          userId,
+        }),
       ]);
 
       console.log(`✅ Pipeline Step 2/4: Extraction queued (Job: ${extractionJob})`);
@@ -124,11 +130,13 @@ export class JobOrchestrator {
   static async getPipelineStatus(meetingId: string): Promise<any> {
     try {
       // Get job statuses from all queues for THIS specific meeting
-      const [transcriptionStatus, extractionStatus, sentimentStatus] = await Promise.all([
-        transcriptionQueue.getJobStatus(`transcription-${meetingId}`),
-        extractionQueue.getJobStatus(`extraction-${meetingId}`),
-        sentimentQueue.getJobStatus(`sentiment-${meetingId}`),
-      ]);
+      const [transcriptionStatus, extractionStatus, sentimentStatus, followUpDetectionStatus] =
+        await Promise.all([
+          transcriptionQueue.getJobStatus(`transcription-${meetingId}`),
+          extractionQueue.getJobStatus(`extraction-${meetingId}`),
+          sentimentQueue.getJobStatus(`sentiment-${meetingId}`),
+          followUpDetectionQueue.getJobStatus(`follow-up-${meetingId}`),
+        ]);
 
       // TODO (Day 13): Add timeline status
       // const timelineStatus = await timelineQueue.getJobStatus(`timeline-${meetingId}`);
@@ -137,6 +145,7 @@ export class JobOrchestrator {
         transcription: transcriptionStatus || { state: 'unknown', progress: 0 },
         extraction: extractionStatus || { state: 'pending', progress: 0 },
         sentiment: sentimentStatus || { state: 'pending', progress: 0 },
+        followUpDetection: followUpDetectionStatus || { state: 'pending', progress: 0 },
         // timeline: timelineStatus || { state: 'pending', progress: 0 },
       };
     } catch (error: any) {
@@ -145,6 +154,7 @@ export class JobOrchestrator {
         transcription: { state: 'unknown', progress: 0 },
         extraction: { state: 'unknown', progress: 0 },
         sentiment: { state: 'unknown', progress: 0 },
+        followUpDetection: { state: 'unknown', progress: 0 },
         error: error.message,
       };
     }
@@ -152,17 +162,24 @@ export class JobOrchestrator {
 
   static async getQueueStats(): Promise<any> {
     try {
-      const [transcriptionStats, extractionStats, sentimentStats] = await Promise.all([
-        transcriptionQueue.getStats(),
-        extractionQueue.getStats(),
-        sentimentQueue.getStats(),
-      ]);
+      const [transcriptionStats, extractionStats, sentimentStats, followUpDetectionStats] =
+        await Promise.all([
+          transcriptionQueue.getStats(),
+          extractionQueue.getStats(),
+          sentimentQueue.getStats(),
+          followUpDetectionQueue.getStats(),
+        ]);
 
       return {
         transcription: transcriptionStats,
         extraction: extractionStats,
         sentiment: sentimentStats,
-        totalJobs: transcriptionStats.total + extractionStats.total + sentimentStats.total,
+        followUpDetection: followUpDetectionStats,
+        totalJobs:
+          transcriptionStats.total +
+          extractionStats.total +
+          sentimentStats.total +
+          followUpDetectionStats.total,
       };
     } catch (error: any) {
       console.error('Failed to get queue stats:', error.message);
@@ -199,6 +216,11 @@ export class JobOrchestrator {
         console.log(`✅ Sentiment job cancelled`);
       }
 
+      const followUpJob = await followUpDetectionQueue.getQueue().getJob(`follow-up-${meetingId}`);
+      if (followUpJob) {
+        await followUpJob.remove();
+        console.log(`✅ Follow-up detection job cancelled`);
+      }
       // Update meeting status
       await Meeting.findByIdAndUpdate(meetingId, {
         status: 'cancelled',

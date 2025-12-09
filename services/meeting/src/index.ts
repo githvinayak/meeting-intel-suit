@@ -6,6 +6,7 @@ import meetingRoutes from './routes/meetingRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import queueRoutes from './routes/queueRoutes';
 import searchRoutes from './routes/searchRoutes';
+import commitmentRoutes from './routes/commitmentRoutes';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger/swagger';
 import { connectDatabase } from './config/db';
@@ -56,7 +57,8 @@ app.get('/health', (_req: Request, res: Response) => {
 app.use('/api/v1/meeting', meetingRoutes);
 app.use('/api/v1/meeting', uploadRoutes);
 app.use('/api/v1/queue', queueRoutes);
-app.use('/api/v1/search', searchRoutes);
+app.use('/api/v1/', searchRoutes);
+app.use('/api/v1/', commitmentRoutes);
 
 console.log('✅ Configuration loaded successfully');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

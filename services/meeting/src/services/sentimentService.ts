@@ -1,10 +1,7 @@
-import OpenAI from 'openai';
+import { openai } from '../config/openai';
 import { SENTIMENT_PROMPT } from '../prompts/sentiment';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+
 
 // Cost tracking (GPT-4 pricing)
 const GPT4_INPUT_COST = 0.03 / 1000;

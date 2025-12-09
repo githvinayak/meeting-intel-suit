@@ -27,7 +27,8 @@ interface FollowUpDetectionResult {
 export class CommitmentService {
   /**
    * Create commitment from action item
-   */ async createCommitmentFromActionItem(
+   */
+  async createCommitmentFromActionItem(
     meetingId: string,
     actionItemId: string,
     userId: string

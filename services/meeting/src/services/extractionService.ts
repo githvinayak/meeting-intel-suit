@@ -1,11 +1,7 @@
-import OpenAI from 'openai';
 import { ACTION_ITEMS_PROMPT } from '../prompts/actionItems';
 import { DECISIONS_PROMPT } from '../prompts/decisions';
+import { openai } from '../config/openai';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 // Cost tracking (GPT-4 pricing as of 2024)
 const GPT4_INPUT_COST = 0.03 / 1000; // $0.03 per 1K input tokens
